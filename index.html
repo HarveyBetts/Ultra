@@ -537,7 +537,11 @@ function runIntro(){
 }
 function resetLetterScroll(){const p=document.querySelector('.ip-letter');if(p)p.scrollTop=0;}
 document.getElementById('introSkip').addEventListener('click',()=>{ introTimers.forEach(clearTimeout); buildLetter(); showPanel('letter'); const sc=document.querySelector('.ip-letter'); if(sc)sc.scrollTop=0; });
-document.getElementById('giftBtn').addEventListener('click',()=>{localStorage.setItem(LS.gift,'1');introEl.classList.remove('show');startOnboarding();});
+document.getElementById('giftBtn').addEventListener('click',()=>{
+  introEl.classList.remove('show');
+  const cfgRaw=localStorage.getItem(LS.cfg);
+  if(cfgRaw){ boot(JSON.parse(cfgRaw)); } else { startOnboarding(); }
+});
 function runSplash(cb){ if(REDUCED){cb();return;} splashEl.classList.add('show'); setTimeout(()=>{ splashEl.classList.remove('show'); cb(); }, 1250); }
 
 /* ---------- ONBOARDING ---------- */
@@ -858,11 +862,17 @@ function initReveal(){
 /* ---------- RESET + BOOT ---------- */
 document.getElementById('resetBtn').addEventListener('click',()=>{if(confirm('Start over? This clears your answers, plan edits and progress on this device.')){[LS.cfg,LS.done,LS.onb,LS.overrides,LS.rules].forEach(k=>localStorage.removeItem(k));location.reload();}});
 (function start(){
-  const cfg=localStorage.getItem(LS.cfg);const onbState=JSON.parse(localStorage.getItem(LS.onb)||'null');const params=new URLSearchParams(location.search);
-  if(params.get('code')&&onbState&&onbState.active){if(onbState.picks)Object.assign(picks,onbState.picks);exchangeCode(params.get('code'));history.replaceState({},'',location.pathname);return;}
-  if(cfg){ runSplash(()=>boot(JSON.parse(cfg))); return; }
-  if(!localStorage.getItem(LS.gift)){ runIntro(); }
-  else { if(onbState&&onbState.picks)Object.assign(picks,onbState.picks); onb.classList.add('show'); showStep(onbState&&onbState.step?onbState.step:0); }
+  const cfgRaw=localStorage.getItem(LS.cfg);
+  const onbState=JSON.parse(localStorage.getItem(LS.onb)||'null');
+  const params=new URLSearchParams(location.search);
+  if(params.get('code')){
+    // returning from a Strava redirect — skip the intro
+    if(onbState&&onbState.active){ if(onbState.picks)Object.assign(picks,onbState.picks); exchangeCode(params.get('code')); history.replaceState({},'',location.pathname); return; }
+    if(cfgRaw){ boot(JSON.parse(cfgRaw)); return; }   // boot() consumes the code via initStrava
+    startOnboarding(); return;
+  }
+  // every normal open: play the full intro (photo → donation → letter), then route on the button
+  runIntro();
 })();
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
 </script>
