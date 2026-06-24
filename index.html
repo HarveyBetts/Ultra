@@ -348,12 +348,11 @@
    ============================================================ */
 const CONFIG = {
   // Strava app's PUBLIC client id (NOT the secret). From strava.com/settings/api
-  STRAVA_CLIENT_ID: "REPLACE_WITH_STRAVA_CLIENT_ID",
-  // Your Supabase edge function URL (holds the secret server-side):
-  // https://YOUR-PROJECT-REF.functions.supabase.co/strava-auth
-  EDGE_FN_URL: "https://REPLACE-PROJECT-REF.functions.supabase.co/strava-auth",
-  // Supabase anon key — safe to expose, used to call the edge function
-  SUPABASE_ANON_KEY: "REPLACE_WITH_SUPABASE_ANON_KEY",
+  STRAVA_CLIENT_ID: "255855",
+  // Your Supabase edge function URL (holds the secret server-side)
+  EDGE_FN_URL: "https://vakeartublnnzqenybby.supabase.co/functions/v1/strava-auth",
+  // Supabase publishable key — safe to expose, used to call the edge function
+  SUPABASE_ANON_KEY: "sb_publishable_NVaPy8x9aOIBRDIo4yDx9Q_yH4G0KRM",
 };
 const LS = {cfg:'ultra_cfg', done:'ultra_done', strava:'ultra_strava'};
 
