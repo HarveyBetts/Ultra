@@ -53,8 +53,8 @@
   .ip-money-label{margin-top:14px;font-size:17px;color:var(--chalk)}
   .ip-money-sub{margin-top:8px;font-family:'Spline Sans Mono',monospace;font-size:13px;color:var(--mist);letter-spacing:.04em}
   /* letter panel */
-  .ip-letter{overflow-y:auto}
-  .intro-letter-scroll{max-width:560px;width:100%;margin:auto;display:flex;flex-direction:column;align-items:center;text-align:center}
+  .ip-letter{overflow-y:auto;justify-content:flex-start}
+  .intro-letter-scroll{max-width:560px;width:100%;margin:0 auto;display:flex;flex-direction:column;align-items:center;text-align:center}
   .gift-logo{width:104px;height:104px;flex:0 0 auto}
   .gift-mo-draw{stroke-dasharray:600;stroke-dashoffset:600;animation:draw 1.2s ease .3s forwards}
   @keyframes draw{to{stroke-dashoffset:0}}
@@ -530,11 +530,12 @@ function runIntro(){
   introEl.classList.add('show');
   document.getElementById('introName').textContent=firstName()||'Olivia';
   getDonation(); // warm the cache while the photo shows
-  if(REDUCED){ buildLetter(); showPanel('letter'); return; }
+  if(REDUCED){ buildLetter(); showPanel('letter'); resetLetterScroll(); return; }
   showPanel('photo');
   introTimers.push(setTimeout(()=>{ showPanel('money'); introMoney(); }, 2900));
-  introTimers.push(setTimeout(()=>{ buildLetter(); showPanel('letter'); }, 2900+3700));
+  introTimers.push(setTimeout(()=>{ buildLetter(); showPanel('letter'); resetLetterScroll(); }, 2900+3700));
 }
+function resetLetterScroll(){const p=document.querySelector('.ip-letter');if(p)p.scrollTop=0;}
 document.getElementById('introSkip').addEventListener('click',()=>{ introTimers.forEach(clearTimeout); buildLetter(); showPanel('letter'); const sc=document.querySelector('.ip-letter'); if(sc)sc.scrollTop=0; });
 document.getElementById('giftBtn').addEventListener('click',()=>{localStorage.setItem(LS.gift,'1');introEl.classList.remove('show');startOnboarding();});
 function runSplash(cb){ if(REDUCED){cb();return;} splashEl.classList.add('show'); setTimeout(()=>{ splashEl.classList.remove('show'); cb(); }, 1250); }
