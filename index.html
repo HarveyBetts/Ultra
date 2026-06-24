@@ -29,9 +29,8 @@
   img,svg{max-width:100%}
   input,textarea,select{font-size:16px} /* stops iOS zoom-on-focus */
 
-  /* reveal-on-scroll */
-  .reveal{opacity:0;transform:translateY(16px);transition:opacity .6s ease,transform .6s ease}
-  .reveal.in{opacity:1;transform:none}
+  /* reveal-on-scroll: visible by default, animates in when scrolled to (never hides content if observer fails) */
+  .reveal.in{animation:fadeUp .6s ease both}
 
   /* ---------------- INTRO SEQUENCE ---------------- */
   .intro{position:fixed;inset:0;z-index:210;background:radial-gradient(900px 560px at 50% 0%,rgba(59,176,255,.16),transparent 60%),var(--ink);display:none}
@@ -40,6 +39,21 @@
   .intro-skip:hover{color:var(--chalk);border-color:var(--mist)}
   .intro-panel{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:calc(40px + var(--safe-t)) 26px calc(40px + var(--safe-b));opacity:0;transform:scale(.985);transition:opacity .7s ease,transform .7s ease;pointer-events:none}
   .intro-panel.active{opacity:1;transform:none;pointer-events:auto}
+  /* boot logo + explosion */
+  .ip-logo{overflow:visible}
+  .boot-logo{width:clamp(132px,42vw,184px);height:auto;animation:bootIn 1.4s cubic-bezier(.2,.85,.25,1.05) forwards}
+  @keyframes bootIn{0%{opacity:0;transform:scale(.18) rotate(-25deg)}55%{opacity:1}72%{transform:scale(1.07) rotate(2deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
+  .boot-logo.explode{animation:bootExplodeAnim .6s cubic-bezier(.3,.2,.2,1) forwards}
+  @keyframes bootExplodeAnim{0%{transform:scale(1)}28%{transform:scale(1.2)}100%{opacity:0;transform:scale(3.1)}}
+  .boot-ring{stroke-dasharray:578;stroke-dashoffset:578;animation:ringSweep 1.1s ease .25s forwards}
+  @keyframes ringSweep{to{stroke-dashoffset:0}}
+  .boot-mo{stroke-dasharray:600;stroke-dashoffset:600;animation:draw 1s ease .5s forwards}
+  .boot-tag{font-family:'Spline Sans Mono',monospace;letter-spacing:.5em;text-indent:.5em;font-size:13px;color:var(--mist);margin-top:24px;opacity:0;animation:fadeUp .6s ease 1s forwards}
+  .boot-particles{position:absolute;inset:0;pointer-events:none}
+  .boot-particle{position:absolute;left:50%;top:50%;border-radius:50%;will-change:transform,opacity}
+  .boot-flash{position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,rgba(140,205,255,.95),rgba(59,176,255,.25) 28%,transparent 58%);opacity:0;pointer-events:none}
+  .boot-flash.on{animation:bootflash .5s ease forwards}
+  @keyframes bootflash{0%{opacity:0}22%{opacity:.9}100%{opacity:0}}
   .ip-kicker{font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--mo);margin-bottom:12px}
   /* photo */
   .ip-photo-frame{width:min(86vw,420px);border-radius:20px;overflow:hidden;border:1px solid var(--line);box-shadow:0 24px 70px rgba(0,0,0,.55);margin-bottom:26px}
@@ -244,6 +258,21 @@
 <!-- ============ INTRO SEQUENCE (first open) ============ -->
 <div class="intro" id="intro">
   <button class="intro-skip" id="introSkip">Skip</button>
+
+  <!-- panel 0: boot logo (explodes into photo) -->
+  <div class="intro-panel ip-logo active" data-panel="logo">
+    <div class="boot-flash" id="bootFlash"></div>
+    <div class="boot-particles" id="bootParticles"></div>
+    <svg class="boot-logo" id="bootLogo" viewBox="0 0 200 200" aria-hidden="true">
+      <defs><linearGradient id="bring" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3BB0FF"/><stop offset="1" stop-color="#1D7FD1"/></linearGradient></defs>
+      <circle cx="100" cy="100" r="92" fill="none" stroke="#1A2029" stroke-width="6"/>
+      <circle class="boot-ring" cx="100" cy="100" r="92" fill="none" stroke="url(#bring)" stroke-width="6" stroke-linecap="round"/>
+      <text x="100" y="104" text-anchor="middle" font-family="Anton, sans-serif" font-size="74" fill="#E8ECF2" letter-spacing="-2">60</text>
+      <text x="100" y="150" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="17" fill="#3BB0FF" letter-spacing="6">KM</text>
+      <path class="boot-mo" d="M100 118 C 92 110, 78 104, 64 108 C 52 111, 46 120, 38 118 C 46 126, 56 128, 66 124 C 76 120, 90 118, 100 124 C 110 118, 124 120, 134 124 C 144 128, 154 126, 162 118 C 154 120, 148 111, 136 108 C 122 104, 108 110, 100 118 Z" fill="none" stroke="#E8ECF2" stroke-width="3"/>
+    </svg>
+    <div class="boot-tag">ULTRA</div>
+  </div>
 
   <!-- panel 1: photo -->
   <div class="intro-panel ip-photo" data-panel="photo">
@@ -529,11 +558,25 @@ let introTimers=[];
 function runIntro(){
   introEl.classList.add('show');
   document.getElementById('introName').textContent=firstName()||'Olivia';
-  getDonation(); // warm the cache while the photo shows
+  getDonation(); // warm the cache during the logo sequence
   if(REDUCED){ buildLetter(); showPanel('letter'); resetLetterScroll(); return; }
-  showPanel('photo');
-  introTimers.push(setTimeout(()=>{ showPanel('money'); introMoney(); }, 2900));
-  introTimers.push(setTimeout(()=>{ buildLetter(); showPanel('letter'); resetLetterScroll(); }, 2900+3700));
+  showPanel('logo');
+  introTimers.push(setTimeout(bootExplode, 1550));
+  introTimers.push(setTimeout(()=>showPanel('photo'), 1880));
+  introTimers.push(setTimeout(()=>{ showPanel('money'); introMoney(); }, 1880+2900));
+  introTimers.push(setTimeout(()=>{ buildLetter(); showPanel('letter'); resetLetterScroll(); }, 1880+2900+3600));
+}
+function bootExplode(){
+  const logo=document.getElementById('bootLogo'); if(logo)logo.classList.add('explode');
+  const flash=document.getElementById('bootFlash'); if(flash)flash.classList.add('on');
+  const layer=document.getElementById('bootParticles'); if(!layer||!Element.prototype.animate)return;
+  const colors=['#3BB0FF','#F4C04E','#46C98B','#E8ECF2'];
+  for(let i=0;i<28;i++){
+    const a=(Math.PI*2*i/28)+Math.random()*0.35, dist=130+Math.random()*240, sz=5+Math.random()*7;
+    const p=document.createElement('div'); p.className='boot-particle'; p.style.background=colors[i%colors.length]; p.style.width=p.style.height=sz+'px';
+    layer.appendChild(p);
+    p.animate([{transform:'translate(-50%,-50%) scale(1)',opacity:1},{transform:`translate(calc(-50% + ${Math.cos(a)*dist}px), calc(-50% + ${Math.sin(a)*dist}px)) scale(0)`,opacity:0}],{duration:760+Math.random()*340,easing:'cubic-bezier(.15,.7,.2,1)',fill:'forwards'});
+  }
 }
 function resetLetterScroll(){const p=document.querySelector('.ip-letter');if(p)p.scrollTop=0;}
 document.getElementById('introSkip').addEventListener('click',()=>{ introTimers.forEach(clearTimeout); buildLetter(); showPanel('letter'); const sc=document.querySelector('.ip-letter'); if(sc)sc.scrollTop=0; });
@@ -854,9 +897,12 @@ document.getElementById('aiModalGo').addEventListener('click',async()=>{const no
 
 /* ---------- REVEAL ON SCROLL ---------- */
 function initReveal(){
-  if(REDUCED){document.querySelectorAll('.reveal').forEach(el=>el.classList.add('in'));return;}
-  const io=new IntersectionObserver((entries)=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:.12});
-  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+  const all=document.querySelectorAll('.reveal');
+  if(REDUCED||!('IntersectionObserver' in window)){ all.forEach(el=>el.classList.add('in')); return; }
+  const io=new IntersectionObserver((entries)=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:.08});
+  all.forEach(el=>io.observe(el));
+  // failsafe: if anything never got observed/animated, reveal it anyway
+  setTimeout(()=>all.forEach(el=>el.classList.add('in')),2500);
 }
 
 /* ---------- RESET + BOOT ---------- */
