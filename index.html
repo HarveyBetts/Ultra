@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Ultra — Olivia's 60km for Movember</title>
+<meta name="theme-color" content="#0E1116">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ultra">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Spline+Sans+Mono:wght@400;500;600&family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0E1116; --paper:#13171F; --paper-2:#1A2029; --line:#262E3A;
+    --mist:#8A93A3; --chalk:#E8ECF2; --mo:#3BB0FF; --mo-deep:#1D7FD1;
+    --gold:#F4C04E; --green:#46C98B; --strava:#FC4C02; --radius:14px;
+    --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--ink);color:var(--chalk);font-family:'Sora',system-ui,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .wrap{max-width:1060px;margin:0 auto;padding:0 22px}
+  a{color:inherit}
+
+  /* ---------------- ONBOARDING ---------------- */
+  .onb{position:fixed;inset:0;z-index:100;background:var(--ink);display:none;flex-direction:column;
+       padding:calc(28px + var(--safe-t)) 0 calc(28px + var(--safe-b))}
+  .onb.show{display:flex}
+  .onb-inner{max-width:520px;width:100%;margin:auto;padding:0 24px}
+  .onb-prog{height:5px;border-radius:20px;background:var(--paper-2);overflow:hidden;margin-bottom:34px}
+  .onb-prog i{display:block;height:100%;background:var(--mo);width:0;transition:width .35s cubic-bezier(.2,.7,.2,1)}
+  .onb-step{display:none;animation:rise .4s ease}
+  .onb-step.on{display:block}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .onb-eyebrow{font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--mo);margin-bottom:14px}
+  .onb h2{font-family:'Anton',sans-serif;font-size:34px;text-transform:uppercase;line-height:.95;margin-bottom:10px}
+  .onb p.hint{color:var(--mist);font-size:14.5px;margin-bottom:24px}
+  .field{margin-bottom:18px}
+  .field label{display:block;font-size:13px;color:var(--mist);margin-bottom:7px;font-family:'Spline Sans Mono',monospace;letter-spacing:.04em;text-transform:uppercase}
+  .field input[type=text],.field input[type=number],.field input[type=date]{
+    width:100%;background:var(--paper);border:1px solid var(--line);border-radius:11px;
+    color:var(--chalk);padding:13px 15px;font-family:'Sora';font-size:16px}
+  .field input:focus{outline:none;border-color:var(--mo)}
+  .opts{display:flex;gap:9px;flex-wrap:wrap}
+  .opt{flex:1 1 auto;min-width:fit-content;background:var(--paper);border:1px solid var(--line);border-radius:11px;
+       padding:13px 16px;cursor:pointer;font-size:15px;text-align:center;transition:all .15s ease;font-weight:600}
+  .opt:hover{border-color:var(--mo-deep)}
+  .opt.sel{background:var(--mo);color:#04121F;border-color:var(--mo)}
+  .two{display:flex;gap:12px}
+  .two .field{flex:1}
+  .onb-nav{display:flex;gap:12px;margin-top:30px}
+  .onb-nav button{flex:1;font-family:'Sora';font-weight:700;font-size:16px;padding:15px;border-radius:12px;border:1px solid var(--line);background:transparent;color:var(--chalk);cursor:pointer;transition:all .15s ease}
+  .onb-nav button:active{transform:translateY(1px)}
+  .onb-nav .next{background:var(--mo);color:#04121F;border-color:var(--mo)}
+  .onb-nav .next:hover{background:#5cbcff}
+  .onb-nav .back{flex:0 0 90px}
+  .onb-nav .back:hover{border-color:var(--mist)}
+
+  /* ---------------- HERO ---------------- */
+  header{position:relative;padding:calc(54px + var(--safe-t)) 0 46px;border-bottom:1px solid var(--line);
+    background:radial-gradient(900px 360px at 80% -10%, rgba(59,176,255,.14), transparent 70%),
+               radial-gradient(700px 320px at 0% 120%, rgba(252,76,2,.05), transparent 70%);overflow:hidden}
+  .eyebrow{font-family:'Spline Sans Mono',monospace;font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--mo);margin-bottom:20px}
+  .logo-row{display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+  .logo-mark{flex:0 0 auto;width:132px;height:132px}
+  .logo-text h1{font-family:'Anton',sans-serif;font-size:clamp(50px,11vw,110px);line-height:.84;letter-spacing:-.01em;text-transform:uppercase}
+  .logo-text h1 .km{color:var(--mo)}
+  .logo-text .sub{margin-top:13px;font-size:clamp(15px,2.4vw,19px);color:var(--mist);max-width:46ch}
+  .countdown{display:flex;gap:10px;margin-top:26px;flex-wrap:wrap}
+  .cd{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:12px 16px;text-align:center;min-width:74px}
+  .cd .n{font-family:'Anton',sans-serif;font-size:30px;line-height:1;color:var(--mo)}
+  .cd .l{font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--mist);margin-top:5px}
+  .stat-strip{display:flex;gap:12px;flex-wrap:wrap;margin-top:24px}
+  .chip{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:13px 17px;min-width:104px}
+  .chip .k{font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--mist)}
+  .chip .v{font-family:'Anton',sans-serif;font-size:28px;margin-top:4px}
+  .chip .v small{font-family:'Sora';font-size:13px;color:var(--mist);font-weight:600}
+  .cta-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:30px;align-items:center}
+  .btn{font-family:'Sora';font-weight:700;font-size:15px;padding:13px 22px;border-radius:11px;border:1px solid transparent;cursor:pointer;text-decoration:none;display:inline-flex;gap:9px;align-items:center;transition:transform .15s ease,background .15s ease}
+  .btn:active{transform:translateY(1px)}
+  .btn-primary{background:var(--mo);color:#04121F}
+  .btn-primary:hover{background:#5cbcff}
+  .btn-fund{background:var(--green);color:#04140C}
+  .btn-fund:hover{filter:brightness(1.08)}
+  .btn-ghost{background:transparent;color:var(--chalk);border-color:var(--line)}
+  .btn-ghost:hover{border-color:var(--mo);color:var(--mo)}
+
+  /* ---------------- STRAVA ---------------- */
+  .strava-sec{padding:30px 0 6px}
+  .strava-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+  .strava-card .ico{width:42px;height:42px;flex:0 0 42px;border-radius:10px;background:var(--strava);display:grid;place-items:center}
+  .strava-card .ico svg{width:24px;height:24px}
+  .strava-card .txt{flex:1;min-width:180px}
+  .strava-card .txt b{font-size:15px}
+  .strava-card .txt p{font-size:13px;color:var(--mist);margin-top:2px}
+  .btn-strava{background:var(--strava);color:#fff;border:none}
+  .btn-strava:hover{filter:brightness(1.08)}
+  .acts{margin-top:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+  .act{background:var(--paper-2);border:1px solid var(--line);border-radius:11px;padding:13px 15px}
+  .act .an{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .act .ad{font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--mist);margin-top:3px}
+  .act .am{font-family:'Anton',sans-serif;font-size:22px;margin-top:8px}
+  .act .am small{font-family:'Sora';font-size:12px;color:var(--mist);font-weight:600}
+
+  /* ---------------- SECTIONS ---------------- */
+  .sec{padding:42px 0}
+  .sec-title{font-family:'Anton',sans-serif;font-size:clamp(28px,5vw,44px);text-transform:uppercase;letter-spacing:-.01em;margin-bottom:6px}
+  .sec-lede{color:var(--mist);max-width:62ch;margin-bottom:26px}
+  .progress-sec{padding:34px 0 6px}
+  .bar-head{display:flex;justify-content:space-between;align-items:end;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+  .bar-head .lbl{font-family:'Spline Sans Mono',monospace;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--mist)}
+  .bar-head .pct{font-family:'Anton',sans-serif;font-size:32px;color:var(--mo)}
+  .track{height:12px;border-radius:20px;background:var(--paper-2);border:1px solid var(--line);overflow:hidden}
+  .fill{height:100%;width:0;background:linear-gradient(90deg,var(--mo-deep),var(--mo));border-radius:20px;transition:width .6s cubic-bezier(.2,.7,.2,1)}
+  .track-note{font-size:13px;color:var(--mist);margin-top:9px}
+  .legend{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:24px}
+  .tag{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--mist);font-family:'Spline Sans Mono',monospace;background:var(--paper);border:1px solid var(--line);padding:6px 11px;border-radius:8px}
+  .dot{width:9px;height:9px;border-radius:50%}
+  .weeks{display:grid;grid-template-columns:repeat(auto-fill,minmax(252px,1fr));gap:14px}
+  .week{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;transition:border-color .2s,transform .2s;display:flex;flex-direction:column}
+  .week:hover{border-color:var(--mo-deep);transform:translateY(-3px)}
+  .week.current{border-color:var(--mo);box-shadow:0 0 0 1px var(--mo)}
+  .week-top{padding:15px 17px 13px;border-bottom:1px solid var(--line);position:relative}
+  .week-no{font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--mist)}
+  .week-date{font-family:'Spline Sans Mono',monospace;font-size:10px;color:var(--mo);margin-top:2px}
+  .week-vol{font-family:'Anton',sans-serif;font-size:30px;line-height:1;margin-top:6px}
+  .week-vol small{font-family:'Sora';font-size:13px;color:var(--mist);font-weight:600}
+  .phase-flag{position:absolute;top:15px;right:15px;width:11px;height:11px;border-radius:50%}
+  .now-badge{position:absolute;top:12px;right:30px;font-family:'Spline Sans Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--mo);text-transform:uppercase}
+  .week-long{padding:11px 17px;font-size:13.5px;background:var(--paper-2)}
+  .week-long b{color:var(--gold);font-family:'Spline Sans Mono',monospace;font-weight:600}
+  .week-body{padding:13px 17px 16px;display:flex;flex-direction:column;gap:7px;flex:1}
+  .session{display:flex;gap:9px;align-items:baseline;font-size:13px}
+  .session .d{font-family:'Spline Sans Mono',monospace;font-size:10.5px;color:var(--mist);width:34px;flex:0 0 34px;letter-spacing:.04em;text-transform:uppercase}
+  .session .t{color:var(--chalk)}
+  .rest{color:var(--mist)}
+  .check{margin-top:auto;padding-top:12px;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mist);cursor:pointer;user-select:none}
+  .check input{accent-color:var(--mo);width:15px;height:15px;cursor:pointer}
+  .pace-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:12px}
+  .pace{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+  .pace .name{font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mo);margin-bottom:8px}
+  .pace .val{font-family:'Anton',sans-serif;font-size:29px}
+  .pace .val small{font-family:'Sora';font-size:13px;color:var(--mist);font-weight:600}
+  .pace .desc{font-size:12.5px;color:var(--mist);margin-top:6px}
+  .notes{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:24px 26px}
+  .notes h3{font-family:'Sora';font-weight:800;font-size:16px;margin:18px 0 8px}
+  .notes h3:first-child{margin-top:0}
+  .notes p,.notes li{color:var(--mist);font-size:14.5px}
+  .notes ul{padding-left:18px;margin-top:4px}
+  .notes li{margin-bottom:5px}
+  .notes b{color:var(--chalk)}
+  .assume{border-left:2px solid var(--gold);padding-left:14px;margin-top:10px;font-size:13.5px;color:var(--mist)}
+  footer{border-top:1px solid var(--line);padding:32px 0 calc(60px + var(--safe-b));margin-top:28px;color:var(--mist);font-size:13px}
+  footer b{color:var(--chalk)}
+  .mo-foot{color:var(--mo);font-family:'Spline Sans Mono',monospace;letter-spacing:.1em}
+  .reset{background:none;border:none;color:var(--mist);text-decoration:underline;cursor:pointer;font-size:13px;font-family:'Sora';margin-top:14px}
+  .reset:hover{color:var(--mo)}
+  @media (max-width:560px){.logo-mark{width:104px;height:104px}.chip{flex:1 1 calc(50% - 6px);min-width:0}}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto}}
+  :focus-visible{outline:2px solid var(--mo);outline-offset:3px;border-radius:4px}
+</style>
+</head>
+<body>
+
+<!-- ============ ONBOARDING ============ -->
+<div class="onb" id="onb">
+  <div class="onb-inner">
+    <div class="onb-prog"><i id="onbProg"></i></div>
+
+    <!-- step 0 -->
+    <div class="onb-step on" data-step="0">
+      <div class="onb-eyebrow">Welcome to Ultra</div>
+      <h2>Let's build<br>your 60km.</h2>
+      <p class="hint">A few quick questions and Ultra builds a training plan around your real fitness, your race date, and how often you can run. Takes about a minute.</p>
+    </div>
+
+    <!-- step 1 -->
+    <div class="onb-step" data-step="1">
+      <div class="onb-eyebrow">The basics</div>
+      <h2>Who & when</h2>
+      <p class="hint">Your name and the day it all happens.</p>
+      <div class="field"><label>Runner name</label><input type="text" id="q_name" placeholder="Olivia" value="Olivia"></div>
+      <div class="field"><label>Race day</label><input type="date" id="q_date"></div>
+      <div class="field"><label>Race distance (km)</label><input type="number" id="q_dist" value="60" min="20" max="160"></div>
+    </div>
+
+    <!-- step 2 -->
+    <div class="onb-step" data-step="2">
+      <div class="onb-eyebrow">Where you're at</div>
+      <h2>Current form</h2>
+      <p class="hint">Be honest — the plan is only as good as this.</p>
+      <div class="field"><label>Longest run recently (km)</label><input type="number" id="q_long" value="15" min="3" max="50"></div>
+      <div class="two">
+        <div class="field"><label>5km PB</label><input type="text" id="q_5k" placeholder="mm:ss" value="23:57"></div>
+        <div class="field"><label>10km PB</label><input type="text" id="q_10k" placeholder="mm:ss" value="48:20"></div>
+      </div>
+    </div>
+
+    <!-- step 3 -->
+    <div class="onb-step" data-step="3">
+      <div class="onb-eyebrow">Your week</div>
+      <h2>Days to train</h2>
+      <p class="hint">How many days a week can you realistically run? More days = gentler individual runs.</p>
+      <div class="opts" data-group="days">
+        <div class="opt" data-val="3">3</div>
+        <div class="opt sel" data-val="4">4</div>
+        <div class="opt" data-val="5">5</div>
+        <div class="opt" data-val="6">6</div>
+      </div>
+    </div>
+
+    <!-- step 4 -->
+    <div class="onb-step" data-step="4">
+      <div class="onb-eyebrow">The course</div>
+      <h2>Terrain</h2>
+      <p class="hint">Hills change everything — more climbing means more strength and hike practice.</p>
+      <div class="opts" data-group="terrain" style="flex-direction:column">
+        <div class="opt" data-val="trail">Trail / hilly</div>
+        <div class="opt sel" data-val="mixed">Mixed</div>
+        <div class="opt" data-val="road">Road / flat</div>
+      </div>
+    </div>
+
+    <!-- step 5 -->
+    <div class="onb-step" data-step="5">
+      <div class="onb-eyebrow">Staying healthy</div>
+      <h2>Injuries</h2>
+      <p class="hint">Any current niggles? This dials the volume jumps up or down.</p>
+      <div class="opts" data-group="injury" style="flex-direction:column">
+        <div class="opt sel" data-val="none">None — feeling good</div>
+        <div class="opt" data-val="minor">Minor niggle (knees / shins / ankles)</div>
+        <div class="opt" data-val="significant">Significant — needs real caution</div>
+      </div>
+    </div>
+
+    <!-- step 6 -->
+    <div class="onb-step" data-step="6">
+      <div class="onb-eyebrow">The mission</div>
+      <h2>Your goal</h2>
+      <p class="hint">For a first ultra, finishing is the win. You can change this later.</p>
+      <div class="opts" data-group="goal" style="flex-direction:column">
+        <div class="opt sel" data-val="finish">Just finish — and enjoy it</div>
+        <div class="opt" data-val="strong">Finish strong, no walls</div>
+        <div class="opt" data-val="time">Chase a target time</div>
+      </div>
+    </div>
+
+    <div class="onb-nav">
+      <button class="back" id="onbBack" style="display:none">Back</button>
+      <button class="next" id="onbNext">Get started</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MAIN APP ============ -->
+<div id="app" style="display:none">
+<header>
+  <div class="wrap">
+    <div class="eyebrow" id="heroEyebrow">Movember · ultra build · road to 60km</div>
+    <div class="logo-row">
+      <svg class="logo-mark" viewBox="0 0 200 200" role="img" aria-label="Ultra 60km moustache logo">
+        <defs><linearGradient id="ring" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3BB0FF"/><stop offset="1" stop-color="#1D7FD1"/></linearGradient></defs>
+        <circle cx="100" cy="100" r="92" fill="none" stroke="#262E3A" stroke-width="6"/>
+        <circle cx="100" cy="100" r="92" fill="none" stroke="url(#ring)" stroke-width="6" stroke-linecap="round" stroke-dasharray="430 578" transform="rotate(-90 100 100)"/>
+        <text x="100" y="104" text-anchor="middle" font-family="Anton, sans-serif" font-size="74" fill="#E8ECF2" letter-spacing="-2" id="logoDist">60</text>
+        <text x="100" y="150" text-anchor="middle" font-family="Spline Sans Mono, monospace" font-size="17" fill="#3BB0FF" letter-spacing="6">KM</text>
+        <path d="M100 118 C 92 110, 78 104, 64 108 C 52 111, 46 120, 38 118 C 46 126, 56 128, 66 124 C 76 120, 90 118, 100 124 C 110 118, 124 120, 134 124 C 144 128, 154 126, 162 118 C 154 120, 148 111, 136 108 C 122 104, 108 110, 100 118 Z" fill="#E8ECF2"/>
+      </svg>
+      <div class="logo-text">
+        <h1>Ultra</h1>
+        <p class="sub" id="heroSub"></p>
+      </div>
+    </div>
+    <div class="countdown" id="countdown"></div>
+    <div class="stat-strip" id="statStrip"></div>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="#plan">See the plan ↓</a>
+      <a class="btn btn-fund" href="https://www.gofundme.com/f/60km-one-cause-countless-conversations" target="_blank" rel="noopener">Donate 💙</a>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- STRAVA -->
+  <section class="strava-sec">
+    <div class="strava-card">
+      <div class="ico"><svg viewBox="0 0 24 24" fill="#fff"><path d="M15.4 16.97L13.6 13.4h-2.66l3.86 7.6 3.86-7.6h-2.66l-1.8 3.57zM8.6 7.03L10.4 10.6h2.66L9.2 3 5.34 10.6H8L8.6 7.03z"/></svg></div>
+      <div class="txt">
+        <b id="stravaTitle">Connect Strava</b>
+        <p id="stravaDesc">Auto-pull your runs, see them matched against the plan, and track real mileage.</p>
+      </div>
+      <button class="btn btn-strava" id="stravaBtn">Connect</button>
+    </div>
+    <div class="acts" id="acts"></div>
+  </section>
+
+  <!-- PROGRESS -->
+  <section class="progress-sec">
+    <div class="bar-head"><span class="lbl">Training progress</span><span class="pct" id="pctText">0%</span></div>
+    <div class="track"><div class="fill" id="fill"></div></div>
+    <div class="track-note" id="progNote">Tick off weeks as you go — progress saves on this device.</div>
+  </section>
+
+  <!-- PLAN -->
+  <section class="sec" id="plan">
+    <h2 class="sec-title">The build</h2>
+    <p class="sec-lede" id="planLede"></p>
+    <div class="legend">
+      <span class="tag"><span class="dot" style="background:var(--mo)"></span>Build</span>
+      <span class="tag"><span class="dot" style="background:var(--green)"></span>Recovery</span>
+      <span class="tag"><span class="dot" style="background:var(--gold)"></span>Peak</span>
+      <span class="tag"><span class="dot" style="background:var(--mist)"></span>Taper</span>
+    </div>
+    <div class="weeks" id="weeks"></div>
+  </section>
+
+  <!-- PACES -->
+  <section class="sec">
+    <h2 class="sec-title">Her paces</h2>
+    <p class="sec-lede">Derived from the 10km PB. For an ultra, almost everything is run easy — easy pace is a skill, not a cop-out.</p>
+    <div class="pace-grid" id="paces"></div>
+  </section>
+
+  <!-- NOTES -->
+  <section class="sec">
+    <h2 class="sec-title">Read this first</h2>
+    <div class="notes" id="notes"></div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p class="mo-foot">// ULTRA</p>
+    <p style="margin-top:8px">Built for <b id="footName">Olivia</b> · <b id="footDist">60</b>km ultra · raising money for <b>Movember</b> 🥸</p>
+    <p style="margin-top:6px">Not medical advice — listen to your body over any spreadsheet.</p>
+    <button class="reset" id="resetBtn">Start over / re-do questionnaire</button>
+  </div>
+</footer>
+</div>
+
+<script>
+/* ============================================================
+   ULTRA — config you may want to edit
+   ============================================================ */
+const CONFIG = {
+  // Strava app's PUBLIC client id (NOT the secret). From strava.com/settings/api
+  STRAVA_CLIENT_ID: "REPLACE_WITH_STRAVA_CLIENT_ID",
+  // Your Supabase edge function URL (holds the secret server-side):
+  // https://YOUR-PROJECT-REF.functions.supabase.co/strava-auth
+  EDGE_FN_URL: "https://REPLACE-PROJECT-REF.functions.supabase.co/strava-auth",
+  // Supabase anon key — safe to expose, used to call the edge function
+  SUPABASE_ANON_KEY: "REPLACE_WITH_SUPABASE_ANON_KEY",
+};
+const LS = {cfg:'ultra_cfg', done:'ultra_done', strava:'ultra_strava'};
+
+/* ============================================================
+   ONBOARDING
+   ============================================================ */
+const onb = document.getElementById('onb');
+const app = document.getElementById('app');
+const steps = [...document.querySelectorAll('.onb-step')];
+const onbProg = document.getElementById('onbProg');
+const onbNext = document.getElementById('onbNext');
+const onbBack = document.getElementById('onbBack');
+let stepIdx = 0;
+const picks = {days:'4', terrain:'mixed', injury:'none', goal:'finish'};
+
+// default race date = ~16 weeks out
+(function(){
+  const d = new Date(); d.setDate(d.getDate() + 16*7);
+  document.getElementById('q_date').value = d.toISOString().slice(0,10);
+})();
+
+document.querySelectorAll('.opts').forEach(group=>{
+  group.addEventListener('click',e=>{
+    const opt = e.target.closest('.opt'); if(!opt) return;
+    group.querySelectorAll('.opt').forEach(o=>o.classList.remove('sel'));
+    opt.classList.add('sel');
+    picks[group.dataset.group] = opt.dataset.val;
+  });
+});
+
+function showStep(i){
+  steps.forEach(s=>s.classList.toggle('on', +s.dataset.step===i));
+  onbProg.style.width = (i/(steps.length-1)*100)+'%';
+  onbBack.style.display = i===0 ? 'none':'block';
+  onbNext.textContent = i===steps.length-1 ? 'Build my plan 🚀' : (i===0?'Get started':'Next');
+  stepIdx = i;
+}
+onbNext.addEventListener('click',()=>{
+  if(stepIdx < steps.length-1){ showStep(stepIdx+1); }
+  else { finishOnboarding(); }
+});
+onbBack.addEventListener('click',()=>{ if(stepIdx>0) showStep(stepIdx-1); });
+
+function finishOnboarding(){
+  const cfg = {
+    name: (document.getElementById('q_name').value||'Olivia').trim(),
+    raceDate: document.getElementById('q_date').value,
+    raceDist: clamp(+document.getElementById('q_dist').value||60, 20, 160),
+    currentLong: clamp(+document.getElementById('q_long').value||15, 3, 50),
+    pb5k: document.getElementById('q_5k').value.trim(),
+    pb10k: document.getElementById('q_10k').value.trim(),
+    days: +picks.days, terrain: picks.terrain, injury: picks.injury, goal: picks.goal,
+  };
+  localStorage.setItem(LS.cfg, JSON.stringify(cfg));
+  onb.classList.remove('show');
+  boot(cfg);
+}
+function clamp(n,a,b){return Math.max(a,Math.min(b,n));}
+
+/* ============================================================
+   PLAN GENERATOR — builds weeks from the answers
+   ============================================================ */
+function weeksUntil(dateStr){
+  const race = new Date(dateStr+'T08:00:00');
+  const now = new Date(); now.setHours(0,0,0,0);
+  const ms = race - now;
+  return Math.max(6, Math.min(30, Math.round(ms/(7*24*3600*1000))));
+}
+
+function parsePace(t){ // "48:20" -> seconds
+  const m = /^(\d+):(\d{1,2})$/.exec((t||'').trim());
+  if(!m) return null;
+  return (+m[1])*60 + (+m[2]);
+}
+
+function buildPlan(cfg){
+  const N = weeksUntil(cfg.raceDate);          // total weeks incl race week
+  const injuryFactor = cfg.injury==='significant'?0.78 : cfg.injury==='minor'?0.9 : 1;
+  const peakLong = Math.round(Math.min(cfg.raceDist*0.7, 44) * injuryFactor); // ~70% of race, capped
+  const base = cfg.currentLong;
+  const buildEnd = N-3;                          // peak/dress-rehearsal week
+  const longs = [];
+  // classify build weeks, every 4th = recovery
+  let buildCount=0;
+  for(let w=1; w<=buildEnd; w++) if(w%4!==0) buildCount++;
+  const step = buildCount>1 ? (peakLong-base)/(buildCount-1) : 0;
+  let idx=0, lastBuild=base;
+  for(let w=1; w<=buildEnd; w++){
+    if(w%4===0){ longs.push({wk:w, long:Math.round(lastBuild*0.6), phase:'recovery'}); }
+    else { const L=Math.round(base+step*idx); idx++; lastBuild=L;
+           longs.push({wk:w, long:L, phase: w===buildEnd?'peak':'build'}); }
+  }
+  // taper
+  longs.push({wk:N-2, long:Math.round(peakLong*0.6), phase:'taper'});
+  longs.push({wk:N-1, long:Math.round(peakLong*0.42), phase:'taper'});
+  longs.push({wk:N,   long:cfg.raceDist, phase:'taper', race:true});
+
+  // sessions per week scaled to days
+  return longs.map(o=>{
+    const sessions = makeSessions(o, cfg);
+    const vol = o.race ? Math.round(o.long*1.25) : Math.round(o.long/0.42);
+    return {...o, vol, s:sessions};
+  });
+}
+
+function makeSessions(o, cfg){
+  if(o.race){
+    return [["Tue","6km shakeout"],["Thu","5km easy + strides"],["Sat","Rest — legs up"],["Sun","🏁 "+cfg.raceDist+"km RACE DAY"]];
+  }
+  const big = o.phase==='build' || o.phase==='peak';
+  const hill = cfg.terrain==='trail' || cfg.terrain==='mixed';
+  const quality = o.phase==='recovery' ? "easy + strides" : (hill ? "hills" : "tempo blocks");
+  const L = o.long;
+  const easy = Math.max(6, Math.round(L*0.42));
+  const med  = Math.max(8, Math.round(L*0.5));
+  const lr = (o.phase==='recovery'||o.phase==='taper') ? L+"km relaxed" : L+"km long easy";
+  const sets = {
+    3:[["Tue",easy+"km easy"],["Thu",Math.round(L*0.4)+"km "+quality],["Sun",lr]],
+    4:[["Tue",easy+"km easy"],["Thu",Math.round(L*0.4)+"km "+quality],["Sat",(big?med+"km easy (B2B)":Math.round(L*0.35)+"km easy")],["Sun",lr]],
+    5:[["Mon",Math.round(L*0.3)+"km recovery"],["Tue",easy+"km easy"],["Thu",Math.round(L*0.42)+"km "+quality],["Sat",(big?med+"km easy (B2B)":Math.round(L*0.35)+"km easy")],["Sun",lr]],
+    6:[["Mon",Math.round(L*0.3)+"km recovery"],["Tue",easy+"km easy"],["Wed",Math.round(L*0.3)+"km easy"],["Thu",Math.round(L*0.42)+"km "+quality],["Sat",(big?med+"km easy (B2B)":Math.round(L*0.35)+"km easy")],["Sun",lr]],
+  };
+  return sets[cfg.days] || sets[4];
+}
+
+function derivePaces(cfg){
+  const t10 = parsePace(cfg.pb10k) || 290; // seconds per ... it's total 10k time
+  // 10k pace per km:
+  const p10 = (parsePace(cfg.pb10k)||2900)/10; // sec/km  (48:20 -> 290s -> 4:50/km)
+  const fmt = s=>{s=Math.round(s);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');};
+  return [
+    {name:"Easy / long run", val:fmt(p10*1.22)+"–"+fmt(p10*1.33), unit:"/km", desc:"Where most miles live. Conversational."},
+    {name:"Steady", val:fmt(p10*1.1)+"–"+fmt(p10*1.17), unit:"/km", desc:"Comfortably hard, still controlled."},
+    {name:"Tempo", val:fmt(p10*1.01)+"–"+fmt(p10*1.07), unit:"/km", desc:"Threshold. ~20–30 min efforts."},
+    {name:"Goal "+cfg.raceDist+"km", val:fmt(p10*1.35)+"–"+fmt(p10*1.55), unit:"/km", desc:"Including walk breaks & hills."},
+  ];
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+const PHASE_COLOR={build:"var(--mo)",recovery:"var(--green)",peak:"var(--gold)",taper:"var(--mist)"};
+let PLAN=[], CFG=null;
+
+function boot(cfg){
+  CFG = cfg;
+  app.style.display='block';
+  PLAN = buildPlan(cfg);
+  renderHero(cfg);
+  renderWeeks(cfg);
+  renderPaces(cfg);
+  renderNotes(cfg);
+  initStrava();
+}
+
+function renderHero(cfg){
+  document.getElementById('logoDist').textContent = cfg.raceDist;
+  document.getElementById('heroSub').textContent =
+    `${cfg.name} goes from a ${cfg.currentLong}km long run to a ${cfg.raceDist}km ultra — raising money for Movember, one stupidly long Sunday at a time.`;
+  document.getElementById('footName').textContent = cfg.name;
+  document.getElementById('footDist').textContent = cfg.raceDist;
+  // countdown
+  const race=new Date(cfg.raceDate+'T08:00:00'), now=new Date();
+  const days=Math.max(0,Math.ceil((race-now)/(864e5)));
+  const cd=document.getElementById('countdown');
+  cd.innerHTML =
+    `<div class="cd"><div class="n">${days}</div><div class="l">days to go</div></div>`+
+    `<div class="cd"><div class="n">${PLAN.length}</div><div class="l">weeks</div></div>`+
+    `<div class="cd"><div class="n">${race.toLocaleDateString('en-GB',{day:'numeric'})}</div><div class="l">${race.toLocaleDateString('en-GB',{month:'short'})}</div></div>`;
+  const peak=Math.max(...PLAN.filter(w=>!w.race).map(w=>w.long));
+  document.getElementById('statStrip').innerHTML =
+    `<div class="chip"><div class="k">Goal</div><div class="v">${cfg.raceDist}<small>km</small></div></div>`+
+    `<div class="chip"><div class="k">5km PB</div><div class="v">${cfg.pb5k||'–'}</div></div>`+
+    `<div class="chip"><div class="k">10km PB</div><div class="v">${cfg.pb10k||'–'}</div></div>`+
+    `<div class="chip"><div class="k">Peak long run</div><div class="v">${peak}<small>km</small></div></div>`;
+  document.getElementById('planLede').textContent =
+    `Three weeks building, one week recovering, repeated. ${cfg.days} days a week, ${cfg.terrain} terrain. Volume climbs gradually toward a ${peak}km dress rehearsal, then a three-week taper into race day. Down weeks aren't optional — they're where the fitness sticks.`;
+}
+
+function renderWeeks(cfg){
+  const weeksEl=document.getElementById('weeks'); weeksEl.innerHTML='';
+  const saved=JSON.parse(localStorage.getItem(LS.done)||'{}');
+  const start=new Date(cfg.raceDate+'T08:00:00');
+  start.setDate(start.getDate()-(PLAN.length-1)*7); // monday of week 1 approx
+  const now=new Date();
+  PLAN.forEach((w,i)=>{
+    const wkStart=new Date(start); wkStart.setDate(start.getDate()+i*7);
+    const wkEnd=new Date(wkStart); wkEnd.setDate(wkStart.getDate()+6);
+    const isCurrent = now>=wkStart && now<=wkEnd;
+    const card=document.createElement('div');
+    card.className='week'+(isCurrent?' current':'');
+    const sessions=w.s.map(s=>{
+      const rest=/rest/i.test(s[1]);
+      return `<div class="session"><span class="d">${s[0]}</span><span class="t ${rest?'rest':''}">${s[1]}</span></div>`;
+    }).join('');
+    const key='w'+w.wk;
+    card.innerHTML=`
+      <div class="week-top">
+        <span class="phase-flag" style="background:${PHASE_COLOR[w.phase]}"></span>
+        ${isCurrent?'<span class="now-badge">● now</span>':''}
+        <div class="week-no">Week ${String(w.wk).padStart(2,'0')} · ${w.phase}</div>
+        <div class="week-date">${wkStart.toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</div>
+        <div class="week-vol">${w.vol}<small> km total</small></div>
+      </div>
+      <div class="week-long">Long run · <b>${w.long}km</b></div>
+      <div class="week-body">${sessions}
+        <label class="check"><input type="checkbox" data-k="${key}" ${saved[key]?'checked':''}> Week done</label>
+      </div>`;
+    weeksEl.appendChild(card);
+  });
+  weeksEl.querySelectorAll('.check input').forEach(box=>{
+    box.addEventListener('change',e=>{
+      saved[e.target.dataset.k]=e.target.checked;
+      localStorage.setItem(LS.done,JSON.stringify(saved));
+      updateProgress();
+    });
+  });
+  updateProgress();
+}
+
+function updateProgress(){
+  const saved=JSON.parse(localStorage.getItem(LS.done)||'{}');
+  const done=Object.values(saved).filter(Boolean).length;
+  const pct=Math.round(done/PLAN.length*100);
+  document.getElementById('fill').style.width=pct+'%';
+  document.getElementById('pctText').textContent=pct+'%';
+  document.getElementById('progNote').textContent = done===PLAN.length
+    ? "Every week ticked. Go get that ultra. 🥸"
+    : `${done} of ${PLAN.length} weeks complete · ${PLAN.length-done} to go.`;
+}
+
+function renderPaces(cfg){
+  const el=document.getElementById('paces'); el.innerHTML='';
+  derivePaces(cfg).forEach(p=>{
+    const d=document.createElement('div'); d.className='pace';
+    d.innerHTML=`<div class="name">${p.name}</div><div class="val">${p.val}<small> ${p.unit}</small></div><div class="desc">${p.desc}</div>`;
+    el.appendChild(d);
+  });
+}
+
+function renderNotes(cfg){
+  const inj = cfg.injury==='significant'
+    ? "You flagged a significant injury — volume jumps are deliberately conservative here. Clear the ultra with a physio first, and treat any flare-up as a hard stop."
+    : cfg.injury==='minor'
+    ? "You flagged a minor niggle — keep an eye on it. An early rest day always beats a forced month off."
+    : "No current injuries — good. Stay ahead of it: strength twice a week is cheap insurance.";
+  document.getElementById('notes').innerHTML=`
+    <h3>Your plan, your inputs</h3>
+    <div class="assume">${cfg.days} days/week · ${cfg.terrain} terrain · goal: ${cfg.goal} · longest run so far ${cfg.currentLong}km. Change any of it any time — hit "start over" at the bottom.</div>
+    <h3>The non-negotiables</h3>
+    <ul>
+      <li><b>Easy means easy.</b> If she can't hold a conversation, she's going too fast. ~80% of running lives here.</li>
+      <li><b>The long run is king.</b> Never grow it more than ~10–15% week to week, and back it right off on recovery weeks.</li>
+      <li><b>Back-to-back long runs</b> (a medium-long Saturday before the big Sunday) teach the legs to run tired — the ultra-specific magic.</li>
+      <li><b>Practise fuelling</b> on long runs: ~40–60g carbs/hour plus water and electrolytes. Race day is not the day to experiment.</li>
+      <li><b>Walk breaks are a strategy, not a failure.</b> Hike the hills, run the flats.</li>
+    </ul>
+    <h3>Honest risk note</h3>
+    <p>${inj} The aerobic engine is clearly there — the limiter for a first ultra is connective tissue, not lungs.</p>
+    <h3>Race week</h3>
+    <ul>
+      <li>Nothing new on race day — shoes, socks, kit, gels all tested on long runs.</li>
+      <li>Know the aid stations and what they stock; carry what they don't.</li>
+      <li>Have a drop-bag / crew plan if the race allows it.</li>
+    </ul>`;
+}
+
+/* ============================================================
+   STRAVA (via Supabase edge function)
+   ============================================================ */
+const stravaBtn=document.getElementById('stravaBtn');
+
+function stravaState(){ return JSON.parse(localStorage.getItem(LS.strava)||'null'); }
+
+function initStrava(){
+  // handle OAuth redirect ?code=...&scope=...
+  const params=new URLSearchParams(location.search);
+  if(params.get('code') && params.get('scope')){
+    exchangeCode(params.get('code'));
+    history.replaceState({}, '', location.pathname); // clean URL
+    return;
+  }
+  const st=stravaState();
+  if(st && st.athlete){ showConnected(st); fetchActivities(); }
+  else showDisconnected();
+}
+
+function showDisconnected(){
+  document.getElementById('stravaTitle').textContent='Connect Strava';
+  document.getElementById('stravaDesc').textContent='Auto-pull your runs, see them matched against the plan, and track real mileage.';
+  stravaBtn.textContent='Connect'; stravaBtn.onclick=connectStrava;
+  document.getElementById('acts').innerHTML='';
+}
+function showConnected(st){
+  document.getElementById('stravaTitle').textContent='Strava connected';
+  document.getElementById('stravaDesc').textContent=`Synced as ${st.athlete.firstname||''} ${st.athlete.lastname||''}. Your recent runs:`;
+  stravaBtn.textContent='Disconnect';
+  stravaBtn.onclick=()=>{ localStorage.removeItem(LS.strava); showDisconnected(); };
+}
+
+function connectStrava(){
+  if(CONFIG.STRAVA_CLIENT_ID.startsWith('REPLACE')){
+    alert('Strava isn\'t configured yet.\n\nAdd your STRAVA_CLIENT_ID and EDGE_FN_URL in index.html (see README).');
+    return;
+  }
+  const redirect = location.origin + location.pathname;
+  const url = `https://www.strava.com/oauth/authorize?client_id=${CONFIG.STRAVA_CLIENT_ID}`+
+    `&response_type=code&redirect_uri=${encodeURIComponent(redirect)}`+
+    `&approval_prompt=auto&scope=activity:read_all`;
+  location.href = url;
+}
+
+async function exchangeCode(code){
+  try{
+    const r=await fetch(CONFIG.EDGE_FN_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+CONFIG.SUPABASE_ANON_KEY},
+      body:JSON.stringify({action:'exchange', code})
+    });
+    const data=await r.json();
+    if(data.error) throw new Error(data.error);
+    localStorage.setItem(LS.strava, JSON.stringify(data));
+    showConnected(data); renderActivities(data.activities||[]);
+  }catch(e){ alert('Strava connection failed: '+e.message); showDisconnected(); }
+}
+
+async function fetchActivities(){
+  const st=stravaState(); if(!st) return;
+  try{
+    const r=await fetch(CONFIG.EDGE_FN_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+CONFIG.SUPABASE_ANON_KEY},
+      body:JSON.stringify({action:'activities', refresh_token:st.refresh_token})
+    });
+    const data=await r.json();
+    if(data.refresh_token){ st.refresh_token=data.refresh_token; localStorage.setItem(LS.strava,JSON.stringify(st)); }
+    renderActivities(data.activities||[]);
+  }catch(e){ /* silent — show nothing rather than break */ }
+}
+
+function renderActivities(list){
+  const el=document.getElementById('acts');
+  const runs=list.filter(a=>a.type==='Run').slice(0,6);
+  if(!runs.length){ el.innerHTML=''; return; }
+  el.innerHTML=runs.map(a=>{
+    const km=(a.distance/1000).toFixed(1);
+    const date=new Date(a.start_date_local).toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+    const mins=Math.round(a.moving_time/60);
+    return `<div class="act"><div class="an">${a.name||'Run'}</div><div class="ad">${date} · ${mins} min</div><div class="am">${km}<small> km</small></div></div>`;
+  }).join('');
+}
+
+/* ============================================================
+   RESET + BOOT
+   ============================================================ */
+document.getElementById('resetBtn').addEventListener('click',()=>{
+  if(confirm('Start over? This clears your answers and plan progress on this device.')){
+    localStorage.removeItem(LS.cfg); localStorage.removeItem(LS.done);
+    location.reload();
+  }
+});
+
+(function start(){
+  const saved=localStorage.getItem(LS.cfg);
+  const params=new URLSearchParams(location.search);
+  if(saved){ boot(JSON.parse(saved)); }
+  else if(params.get('code')){ /* returning from strava but no cfg — show onboarding after */ onb.classList.add('show'); showStep(0); }
+  else { onb.classList.add('show'); showStep(0); }
+})();
+
+/* service worker for installability/offline */
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+</script>
+</body>
+</html>
