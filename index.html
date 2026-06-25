@@ -287,6 +287,23 @@
   .toast{position:fixed;left:50%;bottom:calc(28px + var(--safe-b));transform:translateX(-50%) translateY(20px);z-index:160;background:var(--paper);border:1px solid var(--mo);color:var(--chalk);font-size:14px;font-weight:600;padding:12px 20px;border-radius:24px;box-shadow:0 10px 40px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .3s,transform .3s}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
+  /* tutorial button + tour */
+  .tour-btn{position:absolute;top:calc(14px + var(--safe-t));right:16px;z-index:6;background:rgba(26,32,41,.85);border:1px solid var(--line);color:var(--mist);font-size:12px;font-weight:700;padding:7px 13px;border-radius:20px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s}
+  .tour-btn span{display:inline-grid;place-items:center;width:15px;height:15px;border-radius:50%;background:var(--mo);color:#04121F;font-size:10px;font-weight:800}
+  .tour-btn:hover{color:var(--chalk);border-color:var(--mo)}
+  .tour{position:fixed;inset:0;z-index:180;display:none}
+  .tour.show{display:block}
+  .tour-spot{position:absolute;border-radius:12px;box-shadow:0 0 0 9999px rgba(6,9,14,.8);border:2px solid var(--mo);pointer-events:none;transition:all .35s cubic-bezier(.2,.7,.2,1)}
+  .tour-tip{position:absolute;background:var(--paper);border:1px solid var(--mo);border-radius:14px;padding:16px 18px;box-shadow:0 16px 50px rgba(0,0,0,.55);transition:left .35s ease,top .35s ease;pointer-events:auto}
+  .tour-tip h4{font-family:'Anton',sans-serif;font-size:18px;text-transform:uppercase;margin-bottom:5px}
+  .tour-tip p{font-size:13.5px;color:var(--mist);line-height:1.5}
+  .tour-nav{display:flex;align-items:center;justify-content:space-between;margin-top:14px;gap:10px}
+  .tour-count{font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--mist)}
+  .tour-btns{display:flex;gap:7px}
+  .tour-nav button{font-weight:700;font-size:13px;padding:9px 15px;border-radius:9px;border:1px solid var(--line);background:transparent;color:var(--chalk);cursor:pointer}
+  .tour-nav .t-next{background:var(--mo);color:#04121F;border-color:var(--mo)}
+  .tour-skip2{border:none!important;color:var(--mist)!important;text-decoration:underline;padding:9px 4px!important}
+
   @media (max-width:560px){.logo-mark{width:96px;height:96px}.chip{flex:1 1 calc(50% - 6px);min-width:0}}
   @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto}.reveal{opacity:1;transform:none}.gift-logo,.gift-greeting,.gift-letter p,.gift-signoff,.gift-btn,.ip-kicker,.ip-title,.ip-sub,.intro-panel,.eyebrow,.logo-row,.donate-banner,.quote,.countdown,.stat-strip,.week{opacity:1!important;transform:none!important}}
   :focus-visible{outline:2px solid var(--mo);outline-offset:3px;border-radius:4px}
@@ -451,6 +468,7 @@
 <!-- ============ MAIN APP ============ -->
 <div id="app" style="display:none">
 <header>
+  <button class="tour-btn" id="tourBtn" aria-label="Tutorial"><span>?</span> Tutorial</button>
   <div class="wrap">
     <div class="eyebrow" id="heroEyebrow">Movember · ultra build · road to 60km</div>
     <div class="logo-row">
@@ -575,6 +593,23 @@
 
 <!-- toast -->
 <div class="toast" id="toast"></div>
+
+<!-- guided tutorial -->
+<div class="tour" id="tour">
+  <div class="tour-spot" id="tourSpot"></div>
+  <div class="tour-tip" id="tourTip">
+    <h4 id="tourTitle"></h4>
+    <p id="tourBody"></p>
+    <div class="tour-nav">
+      <span class="tour-count" id="tourCount"></span>
+      <div class="tour-btns">
+        <button class="tour-skip2" id="tourSkip">Skip</button>
+        <button id="tourBack">Back</button>
+        <button class="t-next" id="tourNext">Next</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
 const CONFIG = {
@@ -797,6 +832,7 @@ function boot(cfg){
   derivePaces(cfg);PLAN=buildPlan(cfg);computeWeekRanges(cfg);
   renderHero(cfg);renderWeeks();renderPaces(cfg);renderCoach(cfg);renderNotes(cfg);
   renderQuote();fetchDonation();initStrava();initReveal();renderBriefing();
+  if(!localStorage.getItem('ultra_tutorial_done')) setTimeout(runTour,900);
 }
 function computeWeekRanges(cfg){const start=new Date(cfg.raceDate+'T08:00:00');start.setDate(start.getDate()-(PLAN.length-1)*7);WEEK_RANGES=PLAN.map((w,i)=>{const s=new Date(start);s.setDate(start.getDate()+i*7-3);const e=new Date(s);e.setDate(s.getDate()+7);return{s,e};});}
 
@@ -1114,8 +1150,52 @@ function initReveal(){
   setTimeout(()=>all.forEach(el=>el.classList.add('in')),2500);
 }
 
+/* ---------- GUIDED TUTORIAL ---------- */
+const TOUR=[
+ {sel:'#briefing',title:'Your daily briefing',body:'Every day this shows what to run, the pace to aim for, and a quick word from your coach.'},
+ {sel:'.strava-card',title:'Connect Strava',body:'Link Strava once and your runs tick themselves off, your paces stay current, and new runs appear here.'},
+ {sel:'.progress-sec',title:'Your progress',body:'Every run you complete fills this bar — all the way to 60km on race day.'},
+ {sel:'#weeks',title:'Your plan',body:'Sixteen weeks, built around big back-to-back weekends. Tap any run to see how to run it and its target pace.'},
+ {sel:'.week-ai',title:'Change a week',body:'Life happens. Tap "Adjust this week with AI" and say what you need — it rewrites the week for you.'},
+ {sel:'.coach',title:'Your AI coach',body:'It knows your whole plan and can change it. Try "I do a 5km parkrun every Saturday" and watch your weeks update.'},
+ {sel:'#tourBtn',title:"That's the tour!",body:'If you ever need a refresher, tap Tutorial up here any time. Now go smash this 🥸'},
+];
+let tourIdx=0;
+function runTour(){ tourIdx=0; document.getElementById('tour').classList.add('show'); showTourStep(); }
+function endTour(){ document.getElementById('tour').classList.remove('show'); localStorage.setItem('ultra_tutorial_done','1'); }
+function showTourStep(){
+  const step=TOUR[tourIdx], el=document.querySelector(step.sel);
+  if(!el){ if(tourIdx<TOUR.length-1){tourIdx++;return showTourStep();} return endTour(); }
+  document.getElementById('tourTitle').textContent=step.title;
+  document.getElementById('tourBody').textContent=step.body;
+  document.getElementById('tourCount').textContent=(tourIdx+1)+' / '+TOUR.length;
+  document.getElementById('tourBack').style.visibility=tourIdx===0?'hidden':'visible';
+  document.getElementById('tourNext').textContent=tourIdx===TOUR.length-1?'Done':'Next';
+  el.scrollIntoView({behavior:'smooth',block:'center'});
+  setTimeout(()=>positionTour(el),340);
+}
+function positionTour(el){
+  const r=el.getBoundingClientRect(), pad=8, vw=window.innerWidth, vh=window.innerHeight;
+  const spot=document.getElementById('tourSpot');
+  spot.style.left=(r.left-pad)+'px';spot.style.top=(r.top-pad)+'px';spot.style.width=(r.width+pad*2)+'px';spot.style.height=(r.height+pad*2)+'px';
+  const tip=document.getElementById('tourTip');
+  const tipW=Math.min(300,vw-24); tip.style.width=tipW+'px';
+  const tipH=tip.offsetHeight||200, spaceBelow=vh-r.bottom;
+  let top; if(spaceBelow>tipH+30) top=r.bottom+14; else if(r.top>tipH+30) top=r.top-tipH-14; else top=(vh-tipH)/2;
+  top=Math.max(12,Math.min(top,vh-tipH-12));
+  let left=Math.min(Math.max(12,r.left+r.width/2-tipW/2),vw-tipW-12);
+  tip.style.left=left+'px'; tip.style.top=top+'px';
+}
+function nextTour(){ if(tourIdx>=TOUR.length-1) endTour(); else { tourIdx++; showTourStep(); } }
+document.getElementById('tourNext').addEventListener('click',nextTour);
+document.getElementById('tourBack').addEventListener('click',()=>{ if(tourIdx>0){tourIdx--;showTourStep();} });
+document.getElementById('tourSkip').addEventListener('click',endTour);
+document.getElementById('tourBtn').addEventListener('click',runTour);
+document.getElementById('tour').addEventListener('click',e=>{ if(e.target.closest('.tour-tip'))return; nextTour(); });
+window.addEventListener('resize',()=>{ if(document.getElementById('tour').classList.contains('show')){ const el=document.querySelector(TOUR[tourIdx].sel); if(el)positionTour(el); } });
+
 /* ---------- RESET + BOOT ---------- */
-document.getElementById('resetBtn').addEventListener('click',()=>{if(confirm('Start over? This clears your answers, plan edits and progress on this device.')){[LS.cfg,LS.done,LS.onb,LS.overrides,LS.rules].forEach(k=>localStorage.removeItem(k));location.reload();}});
+document.getElementById('resetBtn').addEventListener('click',()=>{if(confirm('Start over? This clears your answers, plan edits and progress on this device.')){[LS.cfg,LS.done,LS.onb,LS.overrides,LS.rules,LS.seen].forEach(k=>localStorage.removeItem(k));localStorage.removeItem('ultra_tutorial_done');location.reload();}});
 (function start(){
   const cfgRaw=localStorage.getItem(LS.cfg);
   const onbState=JSON.parse(localStorage.getItem(LS.onb)||'null');
