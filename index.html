@@ -856,9 +856,9 @@ function roleLabel(role,o,cfg,bd){
 function qualityLabel(role,o,cfg,bd){
   const L=o.long, cap=capFor(cfg), wk=n=>Math.min(Math.max(5,Math.round(n)),cap);
   const hill=cfg.terrain==='trail'||cfg.hills==='big';
-  if(bd==='speed') return role==='q1' ? wk(L*0.8)+"km w/ 5×3min @ interval" : wk(L*0.7)+"km tempo blocks";
-  if(bd==='half')  return role==='q1' ? (hill?wk(L*0.6)+"km hills":wk(L*0.6)+"km tempo blocks") : wk(L*0.6)+"km w/ 6×800m @ interval";
-  if(bd==='marathon') return role==='q1' ? wk(L*0.6)+"km tempo blocks" : wk(L*0.6)+"km w/ "+Math.round(L*0.3)+"km @ marathon pace";
+  if(bd==='speed') return role==='q1' ? wk(L*0.8)+"km run — 5 × 3min fast" : wk(L*0.7)+"km tempo run";
+  if(bd==='half')  return role==='q1' ? (hill?wk(L*0.6)+"km hills":wk(L*0.6)+"km tempo run") : wk(L*0.6)+"km run — 6 × 800m fast";
+  if(bd==='marathon') return role==='q1' ? wk(L*0.6)+"km tempo run" : wk(L*0.6)+"km run — last "+Math.round(L*0.3)+"km at goal pace";
   return role==='q1' ? (hill?wk(L*0.55)+"km hills":wk(L*0.55)+"km tempo blocks") : wk(L*0.5)+"km easy + strides";
 }
 function longLabel(o,cfg,bd){
@@ -872,7 +872,7 @@ function longLabel(o,cfg,bd){
   }
   if(bd==='marathon'){
     if(o.phase==='peak') return L+"km long — dress rehearsal";
-    if(o.wk%2===0&&L>=24) return L+"km long — last "+Math.round(L*0.3)+"km @ marathon pace";
+    if(o.wk%2===0&&L>=24) return L+"km long — last "+Math.round(L*0.3)+"km at goal pace";
     return L+"km long easy";
   }
   if(bd==='half'){
@@ -882,26 +882,39 @@ function longLabel(o,cfg,bd){
   return o.phase==='build' ? L+"km easy + strides" : L+"km easy";
 }
 
+function repBreakdown(text,p){
+  const fast=p.interval||'your fast pace';
+  let m=text.match(/(\d+)\s*[×x]\s*(\d+)\s*min/i);
+  if(m){const reps=+m[1],mins=+m[2],rec=Math.max(2,Math.round(mins*0.8));
+    return `What "${reps} × ${mins}min" means — just do this:<br>• Warm up: easy jog for about 10 minutes<br>• Run <b>hard for ${mins} min</b> (around ${fast}/km)<br>• Then <b>easy jog for ~${rec} min</b> to catch your breath<br>• That's one round — <b>repeat until you've done ${reps} rounds</b><br>• Cool down: easy jog for ~5 minutes<br><br>The hard bits should feel tough but doable — aim to run the last one as well as the first.`;
+  }
+  m=text.match(/(\d+)\s*[×x]\s*(\d+)\s*m(?!in)/i);
+  if(m){const reps=+m[1],met=+m[2];
+    return `What "${reps} × ${met}m" means — just do this:<br>• Warm up: easy jog for about 10 minutes<br>• Run <b>hard for ${met} m</b> (around ${fast}/km)<br>• Then <b>easy jog ~90 seconds</b> (about 400 m) to recover<br>• That's one round — <b>repeat until you've done ${reps} rounds</b><br>• Cool down: easy jog for ~5 minutes<br><br>Keep every round the same speed — strong but controlled, never an all-out sprint.`;
+  }
+  return null;
+}
 function sessionGuide(text,cfg){
   const t=text.toLowerCase(), p=PACES_CACHE||{};
-  if(/race day/.test(t)) return {pill:"Race pace · "+(p.goal||''),body:"This is it. Start slower than feels right — bank patience, not time. Walk every aid station, eat 40–60g carbs every 30–40 min from the very start, break it into chunks you can hold in your head. First half calm; second half is where your training shows up."};
-  if(/parkrun/.test(t)) return {pill:"Easy 5k + extra",body:"Start at your Saturday parkrun and run it relaxed — not racing, unless it's a planned monthly benchmark. If there's distance after it, roll straight on from the finish to turn it into your long / back-to-back day. The fixed weekly start time and community are a brilliant anchor for 16 weeks of training."};
-  if(/shakeout/.test(t)) return {pill:"Very easy",body:"A short, gentle jog to keep the legs awake without tiring them. Stop feeling fresh. A few 15-second pickups if you're stiff."};
-  if(/dress rehearsal/.test(t)) return {pill:"Easy · biggest day",body:"The single most important run of the block — your full race rehearsal. Wear exactly what you'll race in, carry your real kit, and practise your full fuelling and hydration plan start to finish. Run it the day after a solid Saturday so you start on tired legs, just like race day's back end. Finish knowing you can do this."};
-  if(/goal pace/.test(t)) return {pill:"Easy → goal pace",body:"Run the bulk easy and conversational, then lift the final stretch to your goal "+cfg.raceDist+"km pace ("+(p.goal||'')+"). Teaches your legs to push when they're already tired — exactly the skill the back half of the race demands. Don't start the fast part until you're fatigued."};
-  if(/fuel/.test(t)) return {pill:"Easy · fuel practice",body:"Easy effort throughout, but treat your stomach like it's race day: take a gel or real food every 30–40 min and sip fluids regularly, even if you don't feel you need it. Gut training is real training — "+(cfg.fuel==='none'?"start small and build it up, your stomach adapts.":"dial in the products and timing that sit well for you.")};
-  if(/b2b/.test(t)) return {pill:"Easy · pre-fatigue",body:"A back-to-back: a solid run the day before your long run so tomorrow starts on tired legs. That's the ultra-specific magic — your weekend total matters more than any single run. Keep it genuinely easy; the accumulated fatigue does the work."};
-  if(/hills/.test(t)) return {pill:"Strong uphill effort",body:"Find a hill of 60–90 sec. Run up at a controlled strong effort (hard breathing, not a sprint), jog/walk down, repeat. Builds the leg strength flat road can't. On trails this is race rehearsal — practise power-hiking the steep bits, it's faster and saves your legs."};
-  if(/interval|×\s*\d+\s*min|×\s*\d+\s*m\b|800m/.test(t)) return {pill:"Interval · "+(p.interval||''),body:"After a 10–15 min easy warm-up, run the hard reps at interval pace — strong and quick but repeatable (you should be able to do the last one as well as the first). Jog easily between to recover, then cool down. This lifts your top-end fitness and running economy."};
-  if(/marathon pace/.test(t)) return {pill:"Marathon pace · "+(p.marathon||''),body:"Run the bulk easy, then lock into goal marathon pace ("+(p.marathon||'')+") for the final stretch on tired legs. Rehearses race rhythm and fuelling at the exact effort you'll hold on the day."};
-  if(/tempo/.test(t)) return {pill:"Tempo · "+(p.tempo||''),body:"After 10–15 min easy, settle into 'comfortably hard' — a pace you could just about say a short sentence at. Hold the blocks shown, easy jog between, then cool down. Lifts the pace that feels easy."};
-  if(/recovery/.test(t)) return {pill:"Super easy",body:"Deliberately slow and short — this run exists only to add gentle blood flow. If in doubt, go slower. It should feel almost too easy."};
-  if(/strides/.test(t)) return {pill:"Easy + strides",body:"Easy running, then 4–6 strides: 15–20 sec building to fast-but-relaxed (~90%), full walk-back between. Keeps the legs snappy without fatigue — perfect in a taper."};
-  if(/relaxed/.test(t)) return {pill:"Easy · cut-back",body:"A shorter long run on a down (or taper) week. Same easy effort, less distance — let the body absorb the work. Don't push just because you feel good; that's the entire point of the week."};
-  if(/long/.test(t)) return {pill:"Easy · "+(p.easy||''),body:"The cornerstone of the week. Run by effort, not pace — slow enough to chat the whole way. Walk the hills on purpose, drink to thirst, and keep something in the tank. Time on feet is the goal, not speed."};
-  if(/easy/.test(t)) return {pill:"Easy · "+(p.easy||''),body:"Conversational from the first step. If you can't speak in full sentences, ease off — easy days being truly easy is what lets the hard days count. Most of your fitness is quietly built right here."};
-  if(/rest/.test(t)) return {pill:"Rest",body:"A real day off, or gentle walking / stretching / mobility. Rest is when you actually get fitter — training only counts once you've recovered from it."};
-  return {pill:"",body:"Run this at a comfortable, controlled effort."};
+  if(/race day/.test(t)) return {pill:"The big day 🏁",body:"This is it! Start slower than you want to — it's a long day and going out too fast is the classic mistake. Walk through every aid station, and eat and drink a little from the very start (don't wait until you're hungry or thirsty). Break it into small chunks in your head. You've done the work — enjoy it."};
+  if(/parkrun/.test(t)) return {pill:"Easy 5k (plus extra)",body:"Run your local Saturday parkrun, but keep it relaxed — not a race (unless we've planned one). If there's more distance to do after, just carry straight on from the finish to make it your long run. A nice social way to start a big weekend."};
+  if(/shakeout/.test(t)) return {pill:"Short & gentle",body:"Just a short, very easy jog to keep your legs awake before race day. Stop while you still feel fresh — this one is meant to feel almost too easy."};
+  if(/dress rehearsal/.test(t)) return {pill:"Practice run",body:"Your dress rehearsal for race day. Wear exactly what you'll wear on the day, carry your kit, and eat and drink exactly how you plan to in the race. It comes the day after another run on purpose, so your legs start a little tired — just like the back end of the race. Finish knowing you're ready."};
+  const rb=repBreakdown(text,p);
+  if(/interval|×\s*\d+\s*min|800m|min fast/.test(t)) return {pill:"Speed session · run hard "+(p.interval||''),body: rb || ("A speed session. Warm up easy for 10 min, run the hard efforts shown at about "+(p.interval||'your fast pace')+"/km with easy jogs in between, then cool down. Tough but not an all-out sprint.")};
+  if(/marathon pace/.test(t)) return {pill:"Easy, then goal pace · "+(p.marathon||''),body:"Run most of it nice and easy. Then, for the last part shown, pick it up to your goal race pace ("+(p.marathon||'')+"/km) — the speed you want to hold on the day. Practising this when your legs are already tired is the whole point."};
+  if(/goal pace/.test(t)) return {pill:"Easy, then goal pace",body:"Run the first part easy and chatty. Then lift the last stretch to your goal pace ("+(p.goal||'')+"/km). This teaches your legs to push a bit when they're already tired."};
+  if(/tempo/.test(t)) return {pill:"Comfortably hard · "+(p.tempo||''),body:"Warm up easy for about 10 minutes. Then settle into a 'comfortably hard' pace ("+(p.tempo||'')+"/km) — quick, but not gasping; you could say a few words but not chat. Hold that for the time shown, then jog easy to finish."};
+  if(/hills/.test(t)) return {pill:"Hill strength",body:"Find a hill that takes about 60–90 seconds to run up. Run up at a strong effort (breathing hard, but not sprinting), then walk or jog gently back down to recover. Repeat that for the distance shown. It builds strength you just can't get on the flat."};
+  if(/recovery/.test(t)) return {pill:"Very easy",body:"Short and deliberately slow — this run is only there to loosen your legs the day after a hard one. If in doubt, go slower. It should feel almost lazy."};
+  if(/b2b|back-to-back/.test(t)) return {pill:"Easy (on tired legs)",body:"An easy run the day before your long run, so tomorrow you start on slightly tired legs. Keep it genuinely easy and chatty — feeling a bit tired is the point, not the speed."};
+  if(/fuel/.test(t)) return {pill:"Easy + practise eating",body:"Easy effort the whole way, but practise eating and drinking like it's race day: a little something (a gel, chews, or real food) every 30–40 minutes, even if you don't feel you need it yet. Your stomach gets better at it with practice."};
+  if(/strides/.test(t)) return {pill:"Easy + a few pickups",body:"Mostly easy, relaxed running. Near the end, add 4–6 'strides': run about 20 seconds gradually building up to fast-but-smooth, then walk back to recover before the next. They keep your legs sharp without tiring you out."};
+  if(/relaxed/.test(t)) return {pill:"Easy (lighter week)",body:"A shorter version of your long run on an easier week. Same relaxed, chatty effort — just less distance, so your body can soak up the training. Don't be tempted to push, even if you feel great."};
+  if(/long/.test(t)) return {pill:"Big easy run · "+(p.easy||''),body:"The most important run of your week. Go slow and steady — easy enough to chat the whole way ("+(p.easy||'')+"/km). Walk the hills if you like, drink when you're thirsty, and don't worry about pace at all. Time on your feet is the goal."};
+  if(/easy/.test(t)) return {pill:"Easy & gentle · "+(p.easy||''),body:"Nice and relaxed from the very first step — you should be able to talk in full sentences the whole way ("+(p.easy||'')+"/km). If you're puffing, slow down. Easy days being truly easy is what makes your hard days count."};
+  if(/rest/.test(t)) return {pill:"Day off",body:"A proper rest day — or a gentle walk, stretch, or bit of mobility if you fancy it. Rest is when your body actually turns the training into fitness, so enjoy it guilt-free."};
+  return {pill:"Steady",body:"Run this at a comfortable, controlled effort you could hold a conversation at."};
 }
 
 let PACES_CACHE=null;
@@ -939,7 +952,15 @@ function boot(cfg){
   renderQuote();fetchDonation();initStrava();initReveal();renderBriefing();
   if(!localStorage.getItem('ultra_tutorial_done')) setTimeout(runTour,900);
 }
-function computeWeekRanges(cfg){const start=new Date(cfg.raceDate+'T08:00:00');start.setDate(start.getDate()-(PLAN.length-1)*7);WEEK_RANGES=PLAN.map((w,i)=>{const s=new Date(start);s.setDate(start.getDate()+i*7-3);const e=new Date(s);e.setDate(s.getDate()+7);return{s,e};});}
+function mondayOf(d){ const x=new Date(d); x.setHours(0,0,0,0); const off=(x.getDay()+6)%7; x.setDate(x.getDate()-off); return x; } // Mon=0
+function computeWeekRanges(cfg){
+  const raceMon=mondayOf(new Date(cfg.raceDate+'T08:00:00'));
+  WEEK_RANGES=PLAN.map((w,i)=>{
+    const s=new Date(raceMon); s.setDate(raceMon.getDate()-(PLAN.length-1-i)*7);
+    const e=new Date(s); e.setDate(s.getDate()+7);
+    return {s,e};
+  });
+}
 
 function countUp(el,to,fmt){
   if(REDUCED){el.textContent=fmt?fmt(to):to;return;}
@@ -1252,13 +1273,24 @@ function applyOps(ops){
   return true;
 }
 
+function planContextForCoach(){
+  if(!PLAN.length||!WEEK_RANGES.length)return '';
+  const now=new Date(); now.setHours(0,0,0,0); const horizon=new Date(now.getTime()+24*864e5);
+  const lines=[];
+  PLAN.forEach((w,i)=>{ const r=WEEK_RANGES[i]; if(r.e<now||r.s>horizon)return;
+    w.s.forEach(s=>{ const d=new Date(r.s); d.setDate(r.s.getDate()+WD.indexOf(s[0])); const pace=sessionPace(s[1]);
+      lines.push(d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})+' — '+s[1]+(pace?' (target '+pace+'/km)':'')); });
+  });
+  if(!lines.length)return '';
+  return `\nThe runner's actual sessions for the next few weeks, with exact dates and the correct target pace for each:\n${lines.join('\n')}\nWhen they ask about a run on a date, use THIS list and the pace shown — never guess. A run written like "5 × 3min fast", "6 × 800m fast", "×Nmin" or "×800m" means HARD fast efforts at interval pace with easy jogs between — NOT an easy run. "tempo run" is comfortably-hard. "easy"/"long"/"recovery"/"B2B"/"strides" are easy and conversational. Explain whatever is actually scheduled, accurately.`;
+}
 async function sendCoach(){
   const inp=document.getElementById('coachInput'); const q=inp.value.trim(); if(!q)return;
   inp.value=''; inp.style.height='auto';
   addBubble('me',q); COACH_HISTORY.push({role:'user',content:q});
   const loading=addBubble('coach',''); loading.innerHTML='<span class="spin"></span>thinking…';
   try{
-    const sys=`You are an experienced, warm running coach embedded in ${CFG.name}'s training app, and you can EDIT the plan directly. ${profileText(CFG)}
+    const sys=`You are an experienced, warm running coach embedded in ${CFG.name}'s training app, and you can EDIT the plan directly. ${profileText(CFG)}${planContextForCoach()}
 Reply in PLAIN conversational text — no markdown, no #, no **, no bullet symbols. Under 150 words, encouraging and specific to their data and goal.
 Return ONLY valid JSON (no code fences): {"reply":"...","ops":[]}.
 Use "ops" ONLY when they ask to change their routine/schedule; otherwise ops is [].
@@ -1266,7 +1298,7 @@ Op types:
 - {"op":"recurring","day":"Sat","text":"5km parkrun","merge":true} — applies that weekday every week; merge:true fits it alongside existing training (keeps volume), merge:false fully replaces the day.
 - {"op":"removeDay","day":"Wed"} — clears that weekday across all weeks.
 - {"op":"weekEdit","wk":7,"sessions":[["Sat","12km easy"],["Sun","32km long easy"]]} — rewrites ONE week.
-Day = Mon..Sun. Session text starts with a distance like "5km easy" or "8km w/ 6×800m @ interval". Keep their goal and progression sensible.`;
+Day = Mon..Sun. Session text starts with a distance like "5km easy" or "8km run — 6 × 800m fast". Keep their goal and progression sensible.`;
     const convo=COACH_HISTORY.slice(-8).map(m=>(m.role==='user'?'Runner: ':'Coach: ')+m.content).join('\n');
     let txt=await callAI(sys,convo+'\nCoach, reply now as JSON.',1100); txt=txt.replace(/```json|```/g,'').trim();
     let data; try{ data=JSON.parse(txt); }catch(_){ data={reply:txt.replace(/\*\*/g,'').replace(/^#+\s/gm,''),ops:[]}; }
