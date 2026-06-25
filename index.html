@@ -41,14 +41,14 @@
   .intro-panel.active{opacity:1;transform:none;pointer-events:auto}
   /* boot logo + explosion */
   .ip-logo{overflow:visible}
-  .boot-logo{width:clamp(132px,42vw,184px);height:auto;animation:bootIn 1.4s cubic-bezier(.2,.85,.25,1.05) forwards}
-  @keyframes bootIn{0%{opacity:0;transform:scale(.18) rotate(-25deg)}55%{opacity:1}72%{transform:scale(1.07) rotate(2deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
-  .boot-logo.explode{animation:bootExplodeAnim .6s cubic-bezier(.3,.2,.2,1) forwards}
-  @keyframes bootExplodeAnim{0%{transform:scale(1)}28%{transform:scale(1.2)}100%{opacity:0;transform:scale(3.1)}}
-  .boot-ring{stroke-dasharray:578;stroke-dashoffset:578;animation:ringSweep 1.1s ease .25s forwards}
+  .boot-logo{width:clamp(132px,42vw,184px);height:auto;animation:bootIn 2.8s cubic-bezier(.22,.7,.25,1) forwards}
+  @keyframes bootIn{0%{opacity:0;transform:scale(.2) rotate(-22deg)}55%{opacity:1}78%{transform:scale(1.05) rotate(1deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
+  .boot-logo.explode{animation:bootExplodeAnim .7s cubic-bezier(.3,.2,.2,1) forwards}
+  @keyframes bootExplodeAnim{0%{transform:scale(1)}30%{transform:scale(1.18)}100%{opacity:0;transform:scale(3.1)}}
+  .boot-ring{stroke-dasharray:578;stroke-dashoffset:578;animation:ringSweep 2.2s cubic-bezier(.4,0,.2,1) .4s forwards}
   @keyframes ringSweep{to{stroke-dashoffset:0}}
-  .boot-mo{stroke-dasharray:600;stroke-dashoffset:600;animation:draw 1s ease .5s forwards}
-  .boot-tag{font-family:'Spline Sans Mono',monospace;letter-spacing:.5em;text-indent:.5em;font-size:13px;color:var(--mist);margin-top:24px;opacity:0;animation:fadeUp .6s ease 1s forwards}
+  .boot-mo{stroke-dasharray:600;stroke-dashoffset:600;animation:draw 2s cubic-bezier(.45,0,.2,1) .9s forwards}
+  .boot-tag{font-family:'Spline Sans Mono',monospace;letter-spacing:.5em;text-indent:.5em;font-size:13px;color:var(--mist);margin-top:24px;opacity:0;animation:fadeUp .8s ease 2.1s forwards}
   .boot-particles{position:absolute;inset:0;pointer-events:none}
   .boot-particle{position:absolute;left:50%;top:50%;border-radius:50%;will-change:transform,opacity}
   .boot-flash{position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,rgba(140,205,255,.95),rgba(59,176,255,.25) 28%,transparent 58%);opacity:0;pointer-events:none}
@@ -666,10 +666,10 @@ function runIntro(){
   getDonation(); // warm the cache during the logo sequence
   if(REDUCED){ buildLetter(); showPanel('letter'); resetLetterScroll(); return; }
   showPanel('logo');
-  introTimers.push(setTimeout(bootExplode, 1550));
-  introTimers.push(setTimeout(()=>showPanel('photo'), 1880));
-  introTimers.push(setTimeout(()=>{ showPanel('money'); introMoney(); }, 1880+2900));
-  introTimers.push(setTimeout(()=>{ buildLetter(); showPanel('letter'); resetLetterScroll(); }, 1880+2900+3600));
+  introTimers.push(setTimeout(bootExplode, 3200));
+  introTimers.push(setTimeout(()=>showPanel('photo'), 3600));
+  introTimers.push(setTimeout(()=>{ showPanel('money'); introMoney(); }, 3600+2900));
+  introTimers.push(setTimeout(()=>{ buildLetter(); showPanel('letter'); resetLetterScroll(); }, 3600+2900+3600));
 }
 function bootExplode(){
   const logo=document.getElementById('bootLogo'); if(logo)logo.classList.add('explode');
