@@ -221,7 +221,16 @@
   .coach-row{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
   .coach-chip{font-size:12px;background:var(--paper-2);border:1px solid var(--line);border-radius:8px;padding:8px 12px;cursor:pointer;color:var(--mist);transition:all .15s}
   .coach-chip:hover{border-color:var(--mo);color:var(--mo)}
-  .coach-out{margin-top:16px;padding:16px;background:var(--paper-2);border:1px solid var(--line);border-radius:11px;font-size:14.5px;line-height:1.6;white-space:pre-wrap;display:none}
+  .coach-thread{display:flex;flex-direction:column;gap:10px;margin-bottom:14px;max-height:440px;overflow-y:auto}
+  .coach-thread:empty{display:none}
+  .bubble{max-width:88%;padding:11px 14px;border-radius:14px;font-size:14px;line-height:1.55;white-space:pre-wrap}
+  .bubble.me{align-self:flex-end;background:var(--mo);color:#04121F;border-bottom-right-radius:5px}
+  .bubble.coach{align-self:flex-start;background:var(--paper-2);border:1px solid var(--line);color:var(--chalk);border-bottom-left-radius:5px}
+  .bubble.coach.upd{border-color:var(--green)}
+  .coach-input-row{display:flex;gap:10px;align-items:flex-end}
+  .coach-input-row textarea{flex:1;background:var(--paper-2);border:1px solid var(--line);border-radius:12px;color:var(--chalk);padding:12px 14px;font-family:'Sora';resize:none;min-height:46px;max-height:140px;line-height:1.45}
+  .coach-input-row textarea:focus{outline:none;border-color:var(--mo)}
+  .coach-input-row .btn{padding:13px 18px}
   .coach-out.show{display:block;animation:fadeUp .4s ease}
 
   .notes{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:24px 26px}
@@ -286,6 +295,7 @@
   /* toast */
   .toast{position:fixed;left:50%;bottom:calc(28px + var(--safe-b));transform:translateX(-50%) translateY(20px);z-index:160;background:var(--paper);border:1px solid var(--mo);color:var(--chalk);font-size:14px;font-weight:600;padding:12px 20px;border-radius:24px;box-shadow:0 10px 40px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .3s,transform .3s}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  body.general-mode .donate-banner,body.general-mode .quote{display:none!important}
 
   /* tutorial button + tour */
   .tour-btn{position:absolute;top:calc(14px + var(--safe-t));right:16px;z-index:6;background:rgba(26,32,41,.85);border:1px solid var(--line);color:var(--mist);font-size:12px;font-weight:700;padding:7px 13px;border-radius:20px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s}
@@ -406,11 +416,12 @@
       <div class="onb-eyebrow">Where you're at</div>
       <h2>Current form</h2>
       <div class="strava-prefill" id="formPrefill" style="display:none"></div>
-      <div class="field"><label>Longest run recently (km)</label><input type="number" id="q_long" value="15" min="3" max="50"></div>
-      <div class="field"><label>Typical weekly distance (km)</label><input type="number" id="q_weekly" value="25" min="0" max="200"></div>
+      <div class="field"><label>Longest run recently (km)</label><input type="number" id="q_long" value="15" min="3" max="60"></div>
+      <div class="field"><label>Typical weekly distance (km)</label><input type="number" id="q_weekly" value="25" min="0" max="250"></div>
+      <p class="hint" id="pbHint" style="margin:2px 0 12px">Connect Strava on the first step and your PBs fill in automatically. Or pop in a recent time below.</p>
       <div class="two">
-        <div class="field"><label>5km PB</label><input type="text" id="q_5k" placeholder="mm:ss" value="23:57"></div>
-        <div class="field"><label>10km PB</label><input type="text" id="q_10k" placeholder="mm:ss" value="48:20"></div>
+        <div class="field"><label>Recent 5km</label><input type="text" id="q_5k" placeholder="mm:ss"></div>
+        <div class="field"><label>Recent 10km</label><input type="text" id="q_10k" placeholder="mm:ss"></div>
       </div>
       <div class="field"><label>How long have you been running?</label>
         <div class="opts" data-group="exp"><div class="opt" data-val="new">&lt; 1 yr</div><div class="opt sel" data-val="some">1–3 yrs</div><div class="opt" data-val="seasoned">3+ yrs</div></div>
@@ -422,8 +433,8 @@
       <p class="hint">How the training fits around real life.</p>
       <div class="field"><label>Days per week you can run</label>
         <div class="opts" data-group="days"><div class="opt" data-val="3">3</div><div class="opt sel" data-val="4">4</div><div class="opt" data-val="5">5</div><div class="opt" data-val="6">6</div></div></div>
-      <div class="field"><label>Best day for the long run</label>
-        <div class="opts" data-group="longday"><div class="opt sel" data-val="Sun">Sun</div><div class="opt" data-val="Sat">Sat</div></div></div>
+      <div class="field"><label>Best day for your long run</label>
+        <div class="opts" data-group="longday" style="flex-wrap:wrap"><div class="opt" data-val="Mon">Mon</div><div class="opt" data-val="Tue">Tue</div><div class="opt" data-val="Wed">Wed</div><div class="opt" data-val="Thu">Thu</div><div class="opt" data-val="Fri">Fri</div><div class="opt" data-val="Sat">Sat</div><div class="opt sel" data-val="Sun">Sun</div></div></div>
       <div class="field"><label>Weekday time you usually have</label>
         <div class="opts" data-group="time"><div class="opt" data-val="tight">Under 45 min</div><div class="opt sel" data-val="ok">45–75 min</div><div class="opt" data-val="loose">Lots</div></div></div>
     </div>
@@ -440,13 +451,14 @@
       <h2>Your body</h2>
       <div class="field"><label>Any current injuries or niggles?</label>
         <div class="opts" data-group="injury" style="flex-direction:column"><div class="opt sel" data-val="none">None — feeling good</div><div class="opt" data-val="minor">Minor niggle</div><div class="opt" data-val="significant">Significant — needs caution</div></div></div>
-      <div class="field"><label>Will you do strength / cross-training?</label>
-        <div class="opts" data-group="strength"><div class="opt sel" data-val="yes">Yes, 1–2×/wk</div><div class="opt" data-val="maybe">Maybe</div><div class="opt" data-val="no">No</div></div></div>
+      <div class="field" id="injuryNoteField" style="display:none"><label>Tell your coach about it (so it can train around it)</label><textarea id="q_injuryNote" placeholder="e.g. Right knee gets sore after 10km, physio said it's runner's knee..."></textarea></div>
+      <div class="field"><label>Strength / cross-training per week</label>
+        <div class="opts" data-group="strength" style="flex-wrap:wrap"><div class="opt sel" data-val="0">None</div><div class="opt" data-val="1-2">1–2</div><div class="opt" data-val="3-4">3–4</div><div class="opt" data-val="5-6">5–6</div></div></div>
     </div>
     <div class="onb-step" data-step="7">
       <div class="onb-eyebrow">Fuel</div>
       <h2>Eating on the run</h2>
-      <p class="hint">Ultras are won and lost on fuelling. This sets how much gut-training the plan nudges.</p>
+      <p class="hint">For longer races, fuelling makes or breaks it. This sets how much gut-training the plan nudges.</p>
       <div class="field"><label>Experience taking gels / food mid-run?</label>
         <div class="opts" data-group="fuel" style="flex-direction:column"><div class="opt sel" data-val="none">Never really done it</div><div class="opt" data-val="some">A bit, on longer runs</div><div class="opt" data-val="good">Comfortable with it</div></div></div>
     </div>
@@ -455,7 +467,8 @@
       <h2>Your head</h2>
       <div class="field"><label>What's your goal?</label>
         <div class="opts" data-group="goal" style="flex-direction:column"><div class="opt sel" data-val="finish">Just finish — and enjoy it</div><div class="opt" data-val="strong">Finish strong, no walls</div><div class="opt" data-val="time">Chase a target time</div></div></div>
-      <div class="field"><label>Why are you doing this? (your coach will remember)</label><textarea id="q_why" placeholder="For Movember, for the people I love, to prove I can..."></textarea></div>
+      <div class="field" id="goalTimeField" style="display:none"><label>Target finish time for your <span id="goalDistLabel">race</span></label><input type="text" id="q_goalTime" placeholder="e.g. 19:45 or 3:30:00"></div>
+      <div class="field"><label>Why are you doing this? (your coach will remember)</label><textarea id="q_why" placeholder="To prove I can, for the people I love, for Movember..."></textarea></div>
       <div class="field"><label>What worries you most about it?</label><textarea id="q_fear" placeholder="The distance, getting injured, the early mornings..."></textarea></div>
     </div>
     <div class="onb-nav">
@@ -539,12 +552,14 @@
 
   <section class="sec reveal">
     <h2 class="sec-title">Ask your coach</h2>
-    <p class="sec-lede">Your AI coach knows your plan, paces, goal and your why — and it can change your plan. Tell it "I do a 5km parkrun every Saturday" or "I can't run Thursdays" and it rewrites your weeks. Or just ask for advice.</p>
+    <p class="sec-lede">Your coach knows your plan, paces, goal and your why — and it can change your plan. Tell it "I do a 5km parkrun every Saturday" or "I can't run Thursdays" and it rewrites your weeks. Keep chatting as long as you like.</p>
     <div class="coach">
-      <textarea id="coachInput" placeholder="e.g. I do a 5km parkrun every Saturday — work it into my plan"></textarea>
+      <div class="coach-thread" id="coachThread"></div>
       <div class="coach-row" id="coachChips"></div>
-      <div class="coach-row" style="margin-top:6px"><button class="btn btn-primary" id="coachAsk">Ask coach</button></div>
-      <div class="coach-out" id="coachOut"></div>
+      <div class="coach-input-row">
+        <textarea id="coachInput" rows="1" placeholder="Ask anything, or tell me a change…"></textarea>
+        <button class="btn btn-primary" id="coachAsk">Send</button>
+      </div>
     </div>
   </section>
 
@@ -557,7 +572,7 @@
 <footer>
   <div class="wrap">
     <p class="mo-foot">// ULTRA</p>
-    <p style="margin-top:8px">Built for <b id="footName">Olivia</b> · <b id="footDist">60</b>km ultra · for <b>Movember</b> 🥸</p>
+    <p style="margin-top:8px">Built for <b id="footName">Olivia</b> · <b id="footDist">60</b><span id="footSuffix">km ultra · for <b>Movember</b> 🥸</span></p>
     <p style="margin-top:6px">Made by <b id="footFrom">Harvey</b>. Not medical advice — listen to your body over any spreadsheet.</p>
     <button class="reset" id="resetBtn">Start over / re-do questionnaire</button>
   </div>
@@ -660,16 +675,22 @@ async function introMoney(){
   else{cur.textContent='';num.textContent='Thank you 💙';document.querySelector('.ip-money-label').textContent='for getting behind Movember';}
 }
 let introTimers=[];
+function giftMode(){ try{const c=JSON.parse(localStorage.getItem(LS.cfg)); if(!c)return true; return /\bliv\b|olivia|wilde/.test((c.name||'').toLowerCase()); }catch(e){ return true; } }
 function runIntro(){
   introEl.classList.add('show');
   document.getElementById('introName').textContent=firstName()||'Olivia';
-  getDonation(); // warm the cache during the logo sequence
-  if(REDUCED){ buildLetter(); showPanel('letter'); resetLetterScroll(); return; }
+  const gift=giftMode();
+  if(gift) getDonation(); // warm the cache during the logo sequence
+  if(REDUCED){ if(gift){ buildLetter(); showPanel('letter'); resetLetterScroll(); } else endIntro(); return; }
   showPanel('logo');
   introTimers.push(setTimeout(bootExplode, 3200));
-  introTimers.push(setTimeout(()=>showPanel('photo'), 3600));
-  introTimers.push(setTimeout(()=>{ showPanel('money'); introMoney(); }, 3600+2900));
-  introTimers.push(setTimeout(()=>{ buildLetter(); showPanel('letter'); resetLetterScroll(); }, 3600+2900+3600));
+  if(gift){
+    introTimers.push(setTimeout(()=>showPanel('photo'), 3600));
+    introTimers.push(setTimeout(()=>{ showPanel('money'); introMoney(); }, 3600+2900));
+    introTimers.push(setTimeout(()=>{ buildLetter(); showPanel('letter'); resetLetterScroll(); }, 3600+2900+3600));
+  } else {
+    introTimers.push(setTimeout(endIntro, 4150)); // logo bursts, then straight into the app
+  }
 }
 function bootExplode(){
   const logo=document.getElementById('bootLogo'); if(logo)logo.classList.add('explode');
@@ -694,9 +715,12 @@ const onb=document.getElementById('onb'),app=document.getElementById('app');
 const steps=[...document.querySelectorAll('.onb-step')];
 const onbProg=document.getElementById('onbProg'),onbNext=document.getElementById('onbNext'),onbBack=document.getElementById('onbBack');
 let stepIdx=0;
-const picks={exp:'some',days:'4',longday:'Sun',time:'ok',terrain:'mixed',hills:'rolling',injury:'none',strength:'yes',fuel:'none',goal:'finish'};
+const picks={exp:'some',days:'4',longday:'Sun',time:'ok',terrain:'mixed',hills:'rolling',injury:'none',strength:'0',fuel:'none',goal:'finish'};
 (function(){const d=new Date();d.setDate(d.getDate()+16*7);document.getElementById('q_date').value=d.toISOString().slice(0,10);})();
-document.querySelectorAll('.opts').forEach(group=>{group.addEventListener('click',e=>{const opt=e.target.closest('.opt');if(!opt)return;group.querySelectorAll('.opt').forEach(o=>o.classList.remove('sel'));opt.classList.add('sel');picks[group.dataset.group]=opt.dataset.val;});});
+document.querySelectorAll('.opts').forEach(group=>{group.addEventListener('click',e=>{const opt=e.target.closest('.opt');if(!opt)return;group.querySelectorAll('.opt').forEach(o=>o.classList.remove('sel'));opt.classList.add('sel');picks[group.dataset.group]=opt.dataset.val;
+  if(group.dataset.group==='injury'){document.getElementById('injuryNoteField').style.display=opt.dataset.val==='none'?'none':'block';}
+  if(group.dataset.group==='goal'){const gf=document.getElementById('goalTimeField');gf.style.display=opt.dataset.val==='time'?'block':'none';document.getElementById('goalDistLabel').textContent=(document.getElementById('q_dist').value||'race')+'km';}
+});});
 function startOnboarding(){saveOnbState();onb.classList.add('show');showStep(0);}
 function showStep(i){steps.forEach(s=>s.classList.toggle('on',+s.dataset.step===i));onbProg.style.width=(i/(steps.length-1)*100)+'%';onbBack.style.display=i===0?'none':'block';onbNext.textContent=i===steps.length-1?'Build my plan 🚀':(i===0?'Get started':'Next');stepIdx=i;saveOnbState();}
 onbNext.addEventListener('click',()=>{if(stepIdx<steps.length-1)showStep(stepIdx+1);else finishOnboarding();});
@@ -706,7 +730,10 @@ function clearOnbState(){localStorage.removeItem(LS.onb);}
 document.getElementById('onbStravaSkip').addEventListener('click',()=>showStep(2));
 document.getElementById('onbStravaBtn').addEventListener('click',()=>{saveOnbState();connectStrava();});
 function finishOnboarding(){
-  const cfg={name:(document.getElementById('q_name').value||'Olivia').trim(),race:(document.getElementById('q_race').value||'').trim(),raceDate:document.getElementById('q_date').value,raceDist:clamp(+document.getElementById('q_dist').value||60,20,160),currentLong:clamp(+document.getElementById('q_long').value||15,3,50),weekly:clamp(+document.getElementById('q_weekly').value||25,0,200),pb5k:document.getElementById('q_5k').value.trim(),pb10k:document.getElementById('q_10k').value.trim(),why:(document.getElementById('q_why').value||'').trim(),fear:(document.getElementById('q_fear').value||'').trim(),...picks,days:+picks.days};
+  const pbs=Object.assign({}, window.__pbs||{});
+  const m5=document.getElementById('q_5k').value.trim(); if(m5)pbs['5000']=m5;
+  const m10=document.getElementById('q_10k').value.trim(); if(m10)pbs['10000']=m10;
+  const cfg={name:(document.getElementById('q_name').value||'Olivia').trim(),race:(document.getElementById('q_race').value||'').trim(),raceDate:document.getElementById('q_date').value,raceDist:clamp(+document.getElementById('q_dist').value||60,1,200),currentLong:clamp(+document.getElementById('q_long').value||15,3,60),weekly:clamp(+document.getElementById('q_weekly').value||25,0,250),pbs,pb5k:pbs['5000']||'',pb10k:pbs['10000']||'',goalType:picks.goal,goalTime:(document.getElementById('q_goalTime').value||'').trim(),injuryNote:(document.getElementById('q_injuryNote').value||'').trim(),why:(document.getElementById('q_why').value||'').trim(),fear:(document.getElementById('q_fear').value||'').trim(),...picks,days:+picks.days};
   localStorage.setItem(LS.cfg,JSON.stringify(cfg));clearOnbState();onb.classList.remove('show');boot(cfg);
 }
 function clamp(n,a,b){return Math.max(a,Math.min(b,n));}
@@ -737,11 +764,45 @@ function applyRules(sessions,o,rules){
   return s;
 }
 
+/* ---- time / pace helpers ---- */
+function parseTime(t){ if(!t)return null; const p=String(t).trim().split(':').map(Number); if(p.some(isNaN)||!p.length)return null; if(p.length===1)return p[0]*60; if(p.length===2)return p[0]*60+p[1]; return p[0]*3600+p[1]*60+p[2]; }
+function fmtPace(s){ s=Math.round(s); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
+function fmtClock(s){ s=Math.round(s); const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),x=s%60; return h>0? h+':'+String(m).padStart(2,'0')+':'+String(x).padStart(2,'0') : m+':'+String(x).padStart(2,'0'); }
+function riegel(d1,t1,d2){ return t1*Math.pow(d2/d1,1.06); } // predict time at d2 (m) from race (d1 m, t1 s)
+const WD=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+function shiftDay(day,off){ return WD[((WD.indexOf(day)+off)%7+7)%7]; }
+function sortByDay(arr){ return arr.slice().sort((a,b)=>WD.indexOf(a[0])-WD.indexOf(b[0])); }
+function capFor(cfg){ return cfg.time==='tight'?10:cfg.time==='loose'?18:14; }
+// best equivalent 5k pace (s/km) from all available PBs, else from goal time, else default
+function refP5(cfg){
+  const pbs=cfg.pbs||{}; let best=null;
+  Object.keys(pbs).forEach(d=>{ const dm=+d, ts=parseTime(pbs[d]); if(dm>=3000&&ts){ const p=riegel(dm,ts,5000); if(best==null||p<best)best=p; } });
+  // legacy single fields
+  [['5000',cfg.pb5k],['10000',cfg.pb10k]].forEach(([d,v])=>{ const ts=parseTime(v); if(ts){ const p=riegel(+d,ts,5000); if(best==null||p<best)best=p; } });
+  if(best==null && cfg.goalType==='time' && cfg.goalTime && cfg.raceDist){ const ts=parseTime(cfg.goalTime); if(ts) best=riegel(cfg.raceDist*1000,ts,5000); }
+  if(best==null) best=1500; // ~25:00 5k default
+  return best/5; // s per km
+}
+function goalPaceSec(cfg,p5){
+  if(cfg.goalType==='time'&&cfg.goalTime){ const ts=parseTime(cfg.goalTime); if(ts) return ts/cfg.raceDist; }
+  const pred=riegel(5000,p5*5,cfg.raceDist*1000); return pred/cfg.raceDist;
+}
+function band(d){ return d<=12?'speed': d<=30?'half': d<=46?'marathon':'ultra'; }
+function peakLongFor(cfg,inj){
+  const d=cfg.raceDist; let p;
+  if(d<=12) p=Math.min(Math.max(d*2,12),18);
+  else if(d<=30) p=d*1.15;
+  else if(d<=46) p=Math.min(d*0.85,35);
+  else p=Math.min(d*0.75,50);
+  return Math.round(p*inj);
+}
+
 function buildPlan(cfg){
   const N=weeksUntil(cfg.raceDate);
   const inj=cfg.injury==='significant'?0.8:cfg.injury==='minor'?0.9:1;
-  const peakLong=Math.round(Math.min(cfg.raceDist*0.75,50)*inj);   // single long peak ≈ 75% of race
-  const base=cfg.currentLong, buildEnd=N-3, longs=[];
+  const peakLong=peakLongFor(cfg,inj);
+  let base=Math.min(cfg.currentLong,peakLong); if(base>=peakLong) base=Math.max(5,Math.round(peakLong*0.55));
+  const buildEnd=N-3, longs=[];
   let bc=0; for(let w=1;w<=buildEnd;w++) if(w%4!==0) bc++;
   const stepUp=bc>1?(peakLong-base)/(bc-1):0;
   let idx=0,lb=base;
@@ -763,31 +824,62 @@ function buildPlan(cfg){
   });
 }
 function makeSessions(o,cfg){
-  const LD=cfg.longday||'Sun', SD=LD==='Sun'?'Sat':'Fri';
-  if(o.race) return [["Tue","6km shakeout"],["Thu","5km easy + strides"],[SD,"Rest — legs up"],[LD,"🏁 "+cfg.raceDist+"km RACE DAY"]];
-  const isBuild=o.phase==='build',isPeak=o.phase==='peak',isRec=o.phase==='recovery',isTaper=o.phase==='taper';
-  const hill=cfg.terrain==='trail'||cfg.hills==='big'||cfg.terrain==='mixed';
-  const cap=cfg.time==='tight'?10:cfg.time==='loose'?16:13;        // weekday ceiling from her answer
-  const L=o.long, wk=n=>Math.min(Math.round(n),cap);
-  const qual=isPeak?wk(L*0.4)+"km easy":isRec?wk(L*0.5)+"km easy + strides":isTaper?wk(L*0.55)+"km easy + 4 strides":(hill?wk(L*0.42)+"km hills":wk(L*0.42)+"km tempo");
-  const easyShort=Math.max(6,wk(L*0.4))+"km easy";
-  const recoveryRun=Math.max(5,Math.min(8,Math.round(L*0.3)))+"km recovery";
-  const doB2B=cfg.days>=4&&(isBuild||isPeak);
-  const satKm=doB2B?Math.round(Math.min(L*0.6,30)):Math.max(8,Math.round(L*0.38));
-  const sat=doB2B?satKm+"km easy (B2B)":satKm+"km easy";
-  let longLbl;
-  if(isPeak) longLbl=L+"km long — dress rehearsal (full kit + fuel)";
-  else if(isRec||isTaper) longLbl=L+"km relaxed";
-  else if(isBuild&&o.wk%2===1&&L>=22) longLbl=L+"km long — last "+Math.round(L*0.25)+"km at goal pace";
-  else if(isBuild&&L>=26) longLbl=L+"km long — practise race fuelling";
-  else longLbl=L+"km long easy";
-  const sets={
-    3:[["Tue",easyShort],["Thu",qual],[LD,longLbl]],
-    4:[["Tue",easyShort],["Thu",qual],[SD,sat],[LD,longLbl]],
-    5:[["Mon",recoveryRun],["Tue",easyShort],["Thu",qual],[SD,sat],[LD,longLbl]],
-    6:[["Mon",recoveryRun],["Tue",easyShort],["Wed",easyShort],["Thu",qual],[SD,sat],[LD,longLbl]],
+  const LD=cfg.longday||'Sun', off=WD.indexOf(LD)-6; // templates designed with Sun = long
+  if(o.race){
+    return sortByDay([[shiftDay('Tue',off),"6km shakeout"],[shiftDay('Thu',off),"5km easy + strides"],[shiftDay('Sat',off),"Rest — legs up"],[LD,"🏁 "+cfg.raceDist+"km RACE DAY"]]);
+  }
+  const bd=band(cfg.raceDist);
+  const base={
+    3:[['Tue','easy'],['Thu','q1'],['Sun','long']],
+    4:[['Tue','easy'],['Thu','q1'],['Sat','med'],['Sun','long']],
+    5:[['Mon','recovery'],['Tue','q2'],['Thu','q1'],['Sat','med'],['Sun','long']],
+    6:[['Mon','recovery'],['Tue','q2'],['Wed','easy'],['Thu','q1'],['Sat','med'],['Sun','long']],
   };
-  return sets[cfg.days]||sets[4];
+  const tmpl=base[cfg.days]||base[4];
+  return sortByDay(tmpl.map(([d,role])=>[shiftDay(d,off), roleLabel(role,o,cfg,bd)]));
+}
+function roleLabel(role,o,cfg,bd){
+  const L=o.long, cap=capFor(cfg), wk=n=>Math.min(Math.max(5,Math.round(n)),cap);
+  if(role==='long') return longLabel(o,cfg,bd);
+  if(role==='recovery') return Math.max(4,Math.min(8,Math.round(L*0.3)))+"km recovery";
+  if(role==='easy') return wk(L*0.45)+"km easy";
+  if(role==='med'){
+    const b2b = bd==='ultra' || (bd==='marathon' && (o.phase==='build'||o.phase==='peak'));
+    return b2b ? Math.min(Math.round(L*0.6),30)+"km easy (B2B)" : wk(L*0.4)+"km easy";
+  }
+  // quality
+  if(o.phase==='recovery') return wk(L*0.45)+"km easy + strides";
+  if(o.phase==='taper') return wk(L*0.5)+"km easy + 4 strides";
+  if(o.phase==='peak') return wk(L*0.4)+"km easy";
+  return qualityLabel(role,o,cfg,bd);
+}
+function qualityLabel(role,o,cfg,bd){
+  const L=o.long, cap=capFor(cfg), wk=n=>Math.min(Math.max(5,Math.round(n)),cap);
+  const hill=cfg.terrain==='trail'||cfg.hills==='big';
+  if(bd==='speed') return role==='q1' ? wk(L*0.8)+"km w/ 5×3min @ interval" : wk(L*0.7)+"km tempo blocks";
+  if(bd==='half')  return role==='q1' ? (hill?wk(L*0.6)+"km hills":wk(L*0.6)+"km tempo blocks") : wk(L*0.6)+"km w/ 6×800m @ interval";
+  if(bd==='marathon') return role==='q1' ? wk(L*0.6)+"km tempo blocks" : wk(L*0.6)+"km w/ "+Math.round(L*0.3)+"km @ marathon pace";
+  return role==='q1' ? (hill?wk(L*0.55)+"km hills":wk(L*0.55)+"km tempo blocks") : wk(L*0.5)+"km easy + strides";
+}
+function longLabel(o,cfg,bd){
+  const L=o.long;
+  if(o.phase==='recovery'||o.phase==='taper') return L+"km relaxed";
+  if(bd==='ultra'){
+    if(o.phase==='peak') return L+"km long — dress rehearsal (full kit + fuel)";
+    if(o.wk%2===1&&L>=22) return L+"km long — last "+Math.round(L*0.25)+"km at goal pace";
+    if(L>=26) return L+"km long — practise race fuelling";
+    return L+"km long easy";
+  }
+  if(bd==='marathon'){
+    if(o.phase==='peak') return L+"km long — dress rehearsal";
+    if(o.wk%2===0&&L>=24) return L+"km long — last "+Math.round(L*0.3)+"km @ marathon pace";
+    return L+"km long easy";
+  }
+  if(bd==='half'){
+    if(o.wk%2===1&&L>=16) return L+"km long — last "+Math.round(L*0.25)+"km at goal pace";
+    return L+"km long easy";
+  }
+  return o.phase==='build' ? L+"km easy + strides" : L+"km easy";
 }
 
 function sessionGuide(text,cfg){
@@ -800,6 +892,8 @@ function sessionGuide(text,cfg){
   if(/fuel/.test(t)) return {pill:"Easy · fuel practice",body:"Easy effort throughout, but treat your stomach like it's race day: take a gel or real food every 30–40 min and sip fluids regularly, even if you don't feel you need it. Gut training is real training — "+(cfg.fuel==='none'?"start small and build it up, your stomach adapts.":"dial in the products and timing that sit well for you.")};
   if(/b2b/.test(t)) return {pill:"Easy · pre-fatigue",body:"A back-to-back: a solid run the day before your long run so tomorrow starts on tired legs. That's the ultra-specific magic — your weekend total matters more than any single run. Keep it genuinely easy; the accumulated fatigue does the work."};
   if(/hills/.test(t)) return {pill:"Strong uphill effort",body:"Find a hill of 60–90 sec. Run up at a controlled strong effort (hard breathing, not a sprint), jog/walk down, repeat. Builds the leg strength flat road can't. On trails this is race rehearsal — practise power-hiking the steep bits, it's faster and saves your legs."};
+  if(/interval|×\s*\d+\s*min|×\s*\d+\s*m\b|800m/.test(t)) return {pill:"Interval · "+(p.interval||''),body:"After a 10–15 min easy warm-up, run the hard reps at interval pace — strong and quick but repeatable (you should be able to do the last one as well as the first). Jog easily between to recover, then cool down. This lifts your top-end fitness and running economy."};
+  if(/marathon pace/.test(t)) return {pill:"Marathon pace · "+(p.marathon||''),body:"Run the bulk easy, then lock into goal marathon pace ("+(p.marathon||'')+") for the final stretch on tired legs. Rehearses race rhythm and fuelling at the exact effort you'll hold on the day."};
   if(/tempo/.test(t)) return {pill:"Tempo · "+(p.tempo||''),body:"After 10–15 min easy, settle into 'comfortably hard' — a pace you could just about say a short sentence at. Hold the blocks shown, easy jog between, then cool down. Lifts the pace that feels easy."};
   if(/recovery/.test(t)) return {pill:"Super easy",body:"Deliberately slow and short — this run exists only to add gentle blood flow. If in doubt, go slower. It should feel almost too easy."};
   if(/strides/.test(t)) return {pill:"Easy + strides",body:"Easy running, then 4–6 strides: 15–20 sec building to fast-but-relaxed (~90%), full walk-back between. Keeps the legs snappy without fatigue — perfect in a taper."};
@@ -812,16 +906,27 @@ function sessionGuide(text,cfg){
 
 let PACES_CACHE=null;
 function derivePaces(cfg){
-  const p10=(parsePace(cfg.pb10k)||2900)/10;
-  const fmt=s=>{s=Math.round(s);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');};
-  const out=[
-    {key:'easy',name:"Easy / long run",val:fmt(p10*1.22)+"–"+fmt(p10*1.33),unit:"/km",desc:"Where most miles live. Conversational."},
-    {key:'steady',name:"Steady",val:fmt(p10*1.1)+"–"+fmt(p10*1.17),unit:"/km",desc:"Comfortably hard, still controlled."},
-    {key:'tempo',name:"Tempo",val:fmt(p10*1.01)+"–"+fmt(p10*1.07),unit:"/km",desc:"Threshold. ~20–30 min efforts."},
-    {key:'goal',name:"Goal "+cfg.raceDist+"km",val:fmt(p10*1.35)+"–"+fmt(p10*1.55),unit:"/km",desc:"Including walk breaks & hills."},
-  ];
-  PACES_CACHE={easy:out[0].val,tempo:out[2].val,goal:out[3].val};
-  return out;
+  const p5=refP5(cfg); // s/km equivalent 5k pace
+  const R=(a,b)=>fmtPace(p5+a)+"–"+fmtPace(p5+b);
+  const zones={
+    rep:R(-24,-15), interval:R(-7,3), tempo:R(13,24), marathon:R(40,55), easy:R(63,93),
+  };
+  const gp=goalPaceSec(cfg,p5);
+  const bd=band(cfg.raceDist);
+  PACES_CACHE={ easy:zones.easy, marathon:zones.marathon, tempo:zones.tempo, interval:zones.interval, rep:zones.rep, goal:fmtPace(gp) };
+  const goalCard={key:'goal',name:"Goal "+cfg.raceDist+"km",val:fmtPace(gp),unit:"/km",desc:cfg.goalType==='time'&&cfg.goalTime?("Target "+cfg.goalTime+" — race pace."):"Predicted race pace."};
+  if(bd==='speed') return [
+    {key:'easy',name:"Easy",val:zones.easy,unit:"/km",desc:"Conversational. Most of your week."},
+    {key:'tempo',name:"Threshold",val:zones.tempo,unit:"/km",desc:"Comfortably hard, ~20 min efforts."},
+    {key:'interval',name:"Interval (VO₂)",val:zones.interval,unit:"/km",desc:"3–5 min reps, hard but repeatable."},
+    {key:'rep',name:"Reps (speed)",val:zones.rep,unit:"/km",desc:"Short, fast, full recovery. Form & economy."},
+    goalCard];
+  return [
+    {key:'easy',name:"Easy / long",val:zones.easy,unit:"/km",desc:"Where most miles live. Conversational."},
+    {key:'marathon',name:bd==='ultra'?"Steady":"Marathon",val:zones.marathon,unit:"/km",desc:"Controlled, sustained effort."},
+    {key:'tempo',name:"Threshold",val:zones.tempo,unit:"/km",desc:"Tempo. ~20–30 min efforts."},
+    {key:'interval',name:"Interval",val:zones.interval,unit:"/km",desc:"Faster reps for top-end fitness."},
+    goalCard];
 }
 
 /* ---------- RENDER ---------- */
@@ -843,11 +948,15 @@ function countUp(el,to,fmt){
   requestAnimationFrame(step);
 }
 
+function isLiv(){ const n=((CFG&&CFG.name)||'').toLowerCase(); return /\bliv\b|olivia|wilde/.test(n); }
+function distLabel(d){ return d>=44?'ultra':d>=40?'marathon':d>=20?'half':d+'km'; }
 function renderHero(cfg){
+  const lv=isLiv(); document.body.classList.toggle('general-mode', !lv);
   document.getElementById('logoDist').textContent=cfg.raceDist;
-  document.getElementById('heroSub').textContent=`You're going from a ${cfg.currentLong}km long run to a ${cfg.raceDist}km ultra — one stupidly long Sunday at a time.`;
-  document.getElementById('heroEyebrow').textContent=(cfg.race?cfg.race+' · ':'Movember · ')+'road to '+cfg.raceDist+'km';
+  document.getElementById('heroSub').textContent=lv?`You're going from a ${cfg.currentLong}km long run to a ${cfg.raceDist}km ultra — one stupidly long Sunday at a time.`:`Your ${cfg.raceDist}km${cfg.goalType==='time'&&cfg.goalTime?' · target '+cfg.goalTime:''} training plan, built around your real fitness.`;
+  document.getElementById('heroEyebrow').textContent=(cfg.race?cfg.race+' · ':'')+(lv?'Movember · ':'')+'road to '+cfg.raceDist+'km';
   document.getElementById('footName').textContent=cfg.name;document.getElementById('footDist').textContent=cfg.raceDist;document.getElementById('footFrom').textContent=CONFIG.GIFT_FROM;
+  const fs=document.getElementById('footSuffix'); if(fs) fs.textContent=lv?'km ultra · for Movember 🥸':'km plan';
   const race=new Date(cfg.raceDate+'T08:00:00'),now=new Date();
   const days=Math.max(0,Math.ceil((race-now)/864e5));
   document.getElementById('countdown').innerHTML=
@@ -922,6 +1031,7 @@ function getDonation(){
   return __donationPromise;
 }
 async function fetchDonation(){
+  if(!isLiv()) return;
   const d=await getDonation();
   if(!d){document.getElementById('donateSub').textContent='Fundraiser total will appear here once connected.';return;}
   const cur=curSymbol(d.currency);
@@ -975,13 +1085,11 @@ function fmtSec(s){s=Math.round(s);return Math.floor(s/60)+':'+String(s%60).padS
 function updatePBsFromStrava(list){
   if(!CFG)return;
   const runs=(list||[]).filter(a=>a.type==='Run');
-  let b5=null,b10=null;
-  runs.forEach(a=>{ if(a.distance>=4700&&a.distance<=5400){ if(b5==null||a.moving_time<b5)b5=a.moving_time; }
-                    if(a.distance>=9400&&a.distance<=10600){ if(b10==null||a.moving_time<b10)b10=a.moving_time; } });
-  const cur5=parsePace(CFG.pb5k),cur10=parsePace(CFG.pb10k); let changed=false,msg='';
-  if(b5&&(cur5==null||b5<cur5-1)){CFG.pb5k=fmtSec(b5);changed=true;msg='New 5km PB: '+CFG.pb5k+' 🎉';}
-  if(b10&&(cur10==null||b10<cur10-1)){CFG.pb10k=fmtSec(b10);changed=true;msg='New 10km PB: '+CFG.pb10k+' 🎉';}
-  if(changed){ localStorage.setItem(LS.cfg,JSON.stringify(CFG)); derivePaces(CFG); renderHero(CFG); renderPaces(CFG); renderWeeks(); toast(msg); }
+  const {pbs}=pbsFromRuns(runs);
+  if(!Object.keys(pbs).length)return;
+  CFG.pbs=CFG.pbs||{}; let changed=false,msg='';
+  Object.keys(pbs).forEach(k=>{ const nu=parseTime(pbs[k]), old=parseTime(CFG.pbs[k]); if(nu&&(old==null||nu<old-1)){ CFG.pbs[k]=pbs[k]; changed=true; const nm=(PB_BUCKETS.find(b=>b[0]===k)||[])[3]||k; msg='New '+nm+' PB: '+pbs[k]+' 🎉'; } });
+  if(changed){ CFG.pb5k=CFG.pbs['5000']||CFG.pb5k; CFG.pb10k=CFG.pbs['10000']||CFG.pb10k; localStorage.setItem(LS.cfg,JSON.stringify(CFG)); derivePaces(CFG); renderHero(CFG); renderPaces(CFG); renderWeeks(); toast(msg); }
 }
 
 /* ---- new-run confirmation prompt ---- */
@@ -1052,6 +1160,8 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
 function sessionPace(text){const t=(text||'').toLowerCase(),p=PACES_CACHE||{};
   if(/race day/.test(t))return p.goal||'';
   if(/rest/.test(t))return '';
+  if(/interval|×\s*\d+\s*min|800m/.test(t))return p.interval||'';
+  if(/marathon pace/.test(t))return p.marathon||'';
   if(/tempo/.test(t))return p.tempo||'';
   if(/goal pace/.test(t))return p.goal||'';
   return p.easy||''; // easy, long, hills, recovery, strides, parkrun, shakeout, relaxed, B2B
@@ -1088,13 +1198,42 @@ function renderBriefing(){
   })();
 }
 function autoTick(list){if(!WEEK_RANGES.length)return;window.__lastActs=list;const done=JSON.parse(localStorage.getItem(LS.done)||'{}');const runs=(list||[]).filter(a=>a.type==='Run').map(a=>({d:new Date(a.start_date_local),km:a.distance/1000}));PLAN.forEach((w,i)=>{const r=WEEK_RANGES[i];const weekRuns=runs.filter(x=>x.d>=r.s&&x.d<r.e).sort((a,b)=>b.km-a.km);if(!weekRuns.length)return;const sess=w.s.map((s,si)=>({si,km:sessionKm(s[1])||0,rest:/rest/i.test(s[1])})).filter(s=>!s.rest).sort((a,b)=>b.km-a.km);weekRuns.forEach((run,ri)=>{const target=sess[ri];if(!target)return;const key='w'+w.wk+'_s'+target.si;if(!done[key]){done[key]=true;done[key+'_auto']=true;}});});localStorage.setItem(LS.done,JSON.stringify(done));renderWeeks();}
-function applyStravaPrefill(acts){const runs=(acts||[]).filter(a=>a.type==='Run');if(!runs.length)return;const longest=Math.max(...runs.map(a=>a.distance/1000));const last7=runs.filter(a=>(Date.now()-new Date(a.start_date_local))<7*864e5).reduce((s,a)=>s+a.distance/1000,0);const weekly=last7||runs.slice(0,7).reduce((s,a)=>s+a.distance/1000,0);window.__stravaPrefill={longest:Math.round(longest),weekly:Math.round(weekly),count:runs.length};}
-function resumeOnboardingAfterStrava(){introEl.classList.remove('show');splashEl.classList.remove('show');app.style.display='none';onb.classList.add('show');const pf=window.__stravaPrefill;if(pf){if(pf.longest)document.getElementById('q_long').value=pf.longest;if(pf.weekly)document.getElementById('q_weekly').value=pf.weekly;const s1=document.getElementById('onbStravaStatus');s1.style.display='block';s1.innerHTML=`<b>Connected.</b> Found ${pf.count} recent runs — longest ${pf.longest}km. We've pre-filled your form.`;const fp=document.getElementById('formPrefill');fp.style.display='block';fp.innerHTML=`From Strava: longest recent run <b>${pf.longest}km</b>, ~<b>${pf.weekly}km</b>/week. Tweak below if needed.`;}const st=JSON.parse(localStorage.getItem(LS.onb)||'null');if(st&&st.picks)Object.assign(picks,st.picks);showStep(2);}
+const PB_BUCKETS=[['5000',4700,5400,'5k'],['10000',9400,10600,'10k'],['15000',14200,15800,'15k'],['21097',20500,21800,'half'],['30000',29000,31000,'30k'],['42195',41000,43500,'marathon']];
+function pbsFromRuns(runs){
+  const pbs={},labels=[];
+  PB_BUCKETS.forEach(([key,lo,hi,name])=>{let best=null;runs.forEach(a=>{if(a.distance>=lo&&a.distance<=hi){if(best==null||a.moving_time<best)best=a.moving_time;}});if(best){pbs[key]=fmtClock(best);labels.push(name+' '+fmtClock(best));}});
+  return {pbs,labels};
+}
+function applyStravaPrefill(acts){
+  const runs=(acts||[]).filter(a=>a.type==='Run');if(!runs.length)return;
+  const longest=Math.max(...runs.map(a=>a.distance/1000));
+  const last7=runs.filter(a=>(Date.now()-new Date(a.start_date_local))<7*864e5).reduce((s,a)=>s+a.distance/1000,0);
+  const weekly=last7||runs.slice(0,7).reduce((s,a)=>s+a.distance/1000,0);
+  const {pbs,labels}=pbsFromRuns(runs); window.__pbs=pbs;
+  window.__stravaPrefill={longest:Math.round(longest),weekly:Math.round(weekly),count:runs.length,labels};
+}
+function resumeOnboardingAfterStrava(){introEl.classList.remove('show');splashEl.classList.remove('show');app.style.display='none';onb.classList.add('show');const pf=window.__stravaPrefill;if(pf){if(pf.longest)document.getElementById('q_long').value=pf.longest;if(pf.weekly)document.getElementById('q_weekly').value=pf.weekly;if(window.__pbs){if(window.__pbs['5000'])document.getElementById('q_5k').value=window.__pbs['5000'];if(window.__pbs['10000'])document.getElementById('q_10k').value=window.__pbs['10000'];}const s1=document.getElementById('onbStravaStatus');s1.style.display='block';s1.innerHTML=`<b>Connected.</b> Found ${pf.count} recent runs — longest ${pf.longest}km.`;const fp=document.getElementById('formPrefill');fp.style.display='block';fp.innerHTML=`<b>Pulled from Strava:</b> ${pf.labels&&pf.labels.length?pf.labels.join(' · '):'no standard-distance PBs found yet'}. Longest ${pf.longest}km, ~${pf.weekly}km/week.`;const ph=document.getElementById('pbHint');if(ph)ph.textContent='PBs pulled from your Strava history — edit below if you have fresher times.';}const st=JSON.parse(localStorage.getItem(LS.onb)||'null');if(st&&st.picks)Object.assign(picks,st.picks);showStep(2);}
 
 /* ---------- AI ---------- */
 async function callAI(system,user,maxTokens){const r=await fetch(CONFIG.EDGE_FN_URL,{method:'POST',headers:hdr(),body:JSON.stringify({action:'ai',system,user,max_tokens:maxTokens||900})});const d=await r.json();if(d.error)throw new Error(d.error);return d.text||'';}
-function profileText(cfg){return `Runner: ${cfg.name}. Goal: ${cfg.raceDist}km ultra${cfg.race?' ('+cfg.race+')':''} for Movember on ${cfg.raceDate}. Current longest run ${cfg.currentLong}km, ~${cfg.weekly}km/week, 5k PB ${cfg.pb5k}, 10k PB ${cfg.pb10k}. Trains ${cfg.days} days/week, ${cfg.terrain} terrain (${cfg.hills}), injury: ${cfg.injury}, fuelling experience: ${cfg.fuel}, goal type: ${cfg.goal}. `+(cfg.why?`Her why: "${cfg.why}". `:'')+(cfg.fear?`Her worry: "${cfg.fear}". `:'')+`Pace zones — easy ${PACES_CACHE.easy}/km, tempo ${PACES_CACHE.tempo}/km, goal ${PACES_CACHE.goal}/km.`;}
-function renderCoach(cfg){const chips=["Add my Saturday parkrun to the plan","How should I pace my long run?","I can't run Thursdays — move things","I missed two runs — what now?"];document.getElementById('coachChips').innerHTML=chips.map(c=>`<span class="coach-chip">${escapeHtml(c)}</span>`).join('');document.querySelectorAll('.coach-chip').forEach(c=>c.addEventListener('click',()=>{document.getElementById('coachInput').value=c.textContent;}));}
+function profileText(cfg){
+  const bd=cfg.raceDist<=12?'short-distance speed':cfg.raceDist<=30?'half-marathon range':cfg.raceDist<=46?'marathon':'ultra';
+  const goal=cfg.goalType==='time'&&cfg.goalTime?`a target time of ${cfg.goalTime} for ${cfg.raceDist}km`:(cfg.goalType==='finish'?`to finish ${cfg.raceDist}km`:`a strong ${cfg.raceDist}km`);
+  const names={'5000':'5k','10000':'10k','15000':'15k','21097':'half','30000':'30k','42195':'marathon'};
+  const pbs=cfg.pbs&&Object.keys(cfg.pbs).length?Object.entries(cfg.pbs).map(([d,t])=>(names[d]||d)+' '+t).join(', '):'none recorded';
+  return `Runner: ${cfg.name}. Goal: ${goal}${cfg.race?' ('+cfg.race+')':''} on ${cfg.raceDate} (a ${bd} goal). Current longest run ${cfg.currentLong}km, ~${cfg.weekly}km/week. PBs: ${pbs}. Runs ${cfg.days} days/week, strength ${cfg.strength||'0'}/wk, ${cfg.terrain} terrain (${cfg.hills}), injury: ${cfg.injury}${cfg.injuryNote?' ('+cfg.injuryNote+')':''}, fuelling: ${cfg.fuel}. `+(cfg.why?`Why: "${cfg.why}". `:'')+(cfg.fear?`Worry: "${cfg.fear}". `:'')+`Training paces (min/km): easy ${PACES_CACHE.easy}, threshold ${PACES_CACHE.tempo}, interval ${PACES_CACHE.interval}, goal ${PACES_CACHE.goal}.`;
+}
+let COACH_HISTORY=[];
+function addBubble(role,text,upd){const th=document.getElementById('coachThread');const b=document.createElement('div');b.className='bubble '+(role==='me'?'me':'coach')+(upd?' upd':'');b.textContent=text;th.appendChild(b);th.scrollTop=th.scrollHeight;return b;}
+function renderCoach(cfg){
+  const chips=cfg.raceDist<=12?["What pace for my intervals?","I do parkrun every Saturday","I can't run Thursdays","How do I hit my goal time?"]:["Add my Saturday parkrun","How should I pace my long run?","I can't run Thursdays — move things","I missed two runs — what now?"];
+  document.getElementById('coachChips').innerHTML=chips.map(c=>`<span class="coach-chip">${escapeHtml(c)}</span>`).join('');
+  document.querySelectorAll('.coach-chip').forEach(c=>c.addEventListener('click',()=>{const i=document.getElementById('coachInput');i.value=c.textContent;i.focus();}));
+  const th=document.getElementById('coachThread');
+  if(th&&!th.children.length&&!COACH_HISTORY.length){ addBubble('coach',`Hey ${(cfg.name||'there').split(' ')[0]} — I'm your coach. Ask me anything about your plan, or tell me a change like "I do parkrun every Saturday" and I'll update it for you.`); }
+  const inp=document.getElementById('coachInput');
+  if(inp&&!inp.__wired){ inp.__wired=true; inp.addEventListener('input',()=>{inp.style.height='auto';inp.style.height=Math.min(inp.scrollHeight,140)+'px';}); inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendCoach();}}); }
+}
 
 function applyOps(ops){
   const rules=JSON.parse(localStorage.getItem(LS.rules)||'[]');
@@ -1113,32 +1252,36 @@ function applyOps(ops){
   return true;
 }
 
-document.getElementById('coachAsk').addEventListener('click',async()=>{
-  const q=document.getElementById('coachInput').value.trim();if(!q)return;
-  const out=document.getElementById('coachOut');out.classList.add('show');out.innerHTML='<span class="spin"></span>Coach is thinking…';
+async function sendCoach(){
+  const inp=document.getElementById('coachInput'); const q=inp.value.trim(); if(!q)return;
+  inp.value=''; inp.style.height='auto';
+  addBubble('me',q); COACH_HISTORY.push({role:'user',content:q});
+  const loading=addBubble('coach',''); loading.innerHTML='<span class="spin"></span>thinking…';
   try{
-    const sys=`You are an experienced, warm ultra-marathon coach embedded in ${CFG.name}'s training app, and you can EDIT her plan directly. ${profileText(CFG)}
-Reply in PLAIN conversational text — absolutely no markdown: no #, no **, no bullet symbols, no headings. Keep it under 150 words and encouraging.
+    const sys=`You are an experienced, warm running coach embedded in ${CFG.name}'s training app, and you can EDIT the plan directly. ${profileText(CFG)}
+Reply in PLAIN conversational text — no markdown, no #, no **, no bullet symbols. Under 150 words, encouraging and specific to their data and goal.
 Return ONLY valid JSON (no code fences): {"reply":"...","ops":[]}.
-Use "ops" ONLY when she's asking to change her routine/schedule; otherwise leave ops as [].
+Use "ops" ONLY when they ask to change their routine/schedule; otherwise ops is [].
 Op types:
-- {"op":"recurring","day":"Sat","text":"5km parkrun","merge":true} — applies to that weekday EVERY week. Use merge:true when it should fit alongside existing training so weekend/weekly volume is preserved (e.g. a parkrun that begins her long or back-to-back day); merge:false to fully replace that day.
+- {"op":"recurring","day":"Sat","text":"5km parkrun","merge":true} — applies that weekday every week; merge:true fits it alongside existing training (keeps volume), merge:false fully replaces the day.
 - {"op":"removeDay","day":"Wed"} — clears that weekday across all weeks.
-- {"op":"weekEdit","wk":7,"sessions":[["Sat","12km easy"],["Sun","32km long easy"]]} — rewrites ONE specific week.
-"day" must be one of Mon,Tue,Wed,Thu,Fri,Sat,Sun. Session text starts with the distance like "5km parkrun" or "8km hills". Keep her long run and overall progression sensible. If she just wants advice, ops is [].`;
-    let txt=await callAI(sys,q,1100);
-    txt=txt.replace(/```json|```/g,'').trim();
+- {"op":"weekEdit","wk":7,"sessions":[["Sat","12km easy"],["Sun","32km long easy"]]} — rewrites ONE week.
+Day = Mon..Sun. Session text starts with a distance like "5km easy" or "8km w/ 6×800m @ interval". Keep their goal and progression sensible.`;
+    const convo=COACH_HISTORY.slice(-8).map(m=>(m.role==='user'?'Runner: ':'Coach: ')+m.content).join('\n');
+    let txt=await callAI(sys,convo+'\nCoach, reply now as JSON.',1100); txt=txt.replace(/```json|```/g,'').trim();
     let data; try{ data=JSON.parse(txt); }catch(_){ data={reply:txt.replace(/\*\*/g,'').replace(/^#+\s/gm,''),ops:[]}; }
     let reply=(data.reply||'Done.').replace(/\*\*/g,'').replace(/^#+\s/gm,'');
-    if(Array.isArray(data.ops)&&data.ops.length){ const ok=applyOps(data.ops); reply += ok ? "\n\n✓ Plan updated — scroll up to your weeks to see the change." : ""; }
-    out.textContent=reply;
-  }catch(e){ out.textContent='Coach is unavailable right now — check the AI key is set in Supabase.'; }
-});
+    let updated=false; if(Array.isArray(data.ops)&&data.ops.length) updated=applyOps(data.ops);
+    loading.className='bubble coach'+(updated?' upd':''); loading.textContent=reply+(updated?'\n\n✓ Plan updated — scroll up to see your weeks.':'');
+    COACH_HISTORY.push({role:'assistant',content:reply});
+  }catch(e){ loading.className='bubble coach'; loading.textContent="I'm unavailable right now — check the AI key is set in Supabase."; }
+}
+document.getElementById('coachAsk').addEventListener('click',sendCoach);
 
 let aiWeek=null;
 function openAiModal(wk){aiWeek=wk;const w=PLAN.find(x=>x.wk===wk);document.getElementById('aiModalTitle').textContent=`Adjust week ${wk}`;document.getElementById('aiModalSub').textContent=`Currently a ${w.phase} week — ${w.long}km long run, ${w.vol}km total. Tell the coach what to change.`;document.getElementById('aiModalInput').value='';document.getElementById('aiModalStatus').classList.remove('show');document.getElementById('aiModal').classList.add('show');}
 document.getElementById('aiModalCancel').addEventListener('click',()=>document.getElementById('aiModal').classList.remove('show'));
-document.getElementById('aiModalGo').addEventListener('click',async()=>{const note=document.getElementById('aiModalInput').value.trim();if(!note)return;const w=PLAN.find(x=>x.wk===aiWeek);const status=document.getElementById('aiModalStatus');status.classList.add('show');status.innerHTML='<span class="spin"></span>Rebuilding the week…';try{const sys=`You are an ultra coach editing one week of a training plan. ${profileText(CFG)} Return ONLY valid JSON, no prose, no markdown fences. Format: {"sessions":[["Day","description"],...]} where Day is a 3-letter day (Mon..Sun) and description is short like "12km easy" or "8km hills". Keep it realistic for this ${w.phase} week (long run around ${w.long}km unless she asks otherwise). Honour her request.`;const user=`This week's current sessions: ${JSON.stringify(w.s)}. Her request: "${note}". Rewrite the week.`;let txt=await callAI(sys,user,1200);txt=txt.replace(/```json|```/g,'').trim();const obj=JSON.parse(txt);if(!obj.sessions||!Array.isArray(obj.sessions))throw new Error('bad');const overrides=JSON.parse(localStorage.getItem(LS.overrides)||'{}');overrides['w'+aiWeek]=obj.sessions;localStorage.setItem(LS.overrides,JSON.stringify(overrides));PLAN=buildPlan(CFG);document.getElementById('aiModal').classList.remove('show');renderWeeks();}catch(e){status.innerHTML='Could not rebuild — try rewording, or check the AI key in Supabase.';}});
+document.getElementById('aiModalGo').addEventListener('click',async()=>{const note=document.getElementById('aiModalInput').value.trim();if(!note)return;const w=PLAN.find(x=>x.wk===aiWeek);const status=document.getElementById('aiModalStatus');status.classList.add('show');status.innerHTML='<span class="spin"></span>Rebuilding the week…';try{const sys=`You are an ultra coach editing one week of a training plan. ${profileText(CFG)} Return ONLY valid JSON, no prose, no markdown fences. Format: {"sessions":[["Day","description"],...]} where Day is a 3-letter day (Mon..Sun) and description is short like "12km easy" or "8km hills". Keep it realistic for this ${w.phase} week (long run around ${w.long}km unless they ask otherwise). Honour their request.`;const user=`This week's current sessions: ${JSON.stringify(w.s)}. Their request: "${note}". Rewrite the week.`;let txt=await callAI(sys,user,1200);txt=txt.replace(/```json|```/g,'').trim();const obj=JSON.parse(txt);if(!obj.sessions||!Array.isArray(obj.sessions))throw new Error('bad');const overrides=JSON.parse(localStorage.getItem(LS.overrides)||'{}');overrides['w'+aiWeek]=obj.sessions;localStorage.setItem(LS.overrides,JSON.stringify(overrides));PLAN=buildPlan(CFG);document.getElementById('aiModal').classList.remove('show');renderWeeks();}catch(e){status.innerHTML='Could not rebuild — try rewording, or check the AI key in Supabase.';}});
 
 /* ---------- REVEAL ON SCROLL ---------- */
 function initReveal(){
