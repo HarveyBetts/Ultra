@@ -849,7 +849,8 @@ function buildPlan(cfg){
   const inj=cfg.injury==='significant'?0.8:cfg.injury==='minor'?0.9:1;
   const peakLong=peakLongFor(cfg,inj);
   let base=Math.min(cfg.currentLong,peakLong); if(base>=peakLong) base=Math.max(5,Math.round(peakLong*0.55));
-  const buildEnd=N-3, longs=[];
+  const taperWks=N>=9?2:1;               // short plans taper for 1 week so they still get real build
+  const buildEnd=N-1-taperWks, longs=[];
   let bc=0; for(let w=1;w<=buildEnd;w++) if(w%4!==0) bc++;
   const stepUp=bc>1?(peakLong-base)/(bc-1):0;
   let idx=0,lb=base;
@@ -857,8 +858,8 @@ function buildPlan(cfg){
     if(w%4===0){ longs.push({wk:w,long:Math.round(lb*0.62),phase:'recovery'}); }
     else { const L=Math.round(base+stepUp*idx); idx++; lb=L; longs.push({wk:w,long:L,phase:w===buildEnd?'peak':'build'}); }
   }
-  longs.push({wk:N-2,long:Math.round(peakLong*0.6),phase:'taper'});
-  longs.push({wk:N-1,long:Math.round(peakLong*0.42),phase:'taper'});
+  if(taperWks===2) longs.push({wk:N-2,long:Math.round(peakLong*0.6),phase:'taper',sharpen:true});
+  longs.push({wk:N-1,long:Math.round(peakLong*(taperWks===2?0.42:0.55)),phase:'taper',sharpen:taperWks===1});
   longs.push({wk:N,long:cfg.raceDist,phase:'taper',race:true});
   const overrides=JSON.parse(localStorage.getItem(LS.overrides)||'{}');
   const rules=JSON.parse(localStorage.getItem(LS.rules)||'[]');
@@ -897,20 +898,33 @@ function roleLabel(role,o,cfg,bd){
   }
   // quality
   if(o.phase==='recovery') return wk(L*0.45)+"km easy + strides";
-  if(o.phase==='taper') return wk(L*0.5)+"km easy + 4 strides";
-  if(o.phase==='peak') return wk(L*0.4)+"km easy";
+  if(o.phase==='peak') return qualityLabel(role,o,cfg,bd);            // last big week keeps its edge
+  if(o.phase==='taper'){
+    if(role==='q1'&&o.sharpen){ const n=Math.max(3,Math.min(4,Math.round(L*0.35))); return Math.max(6,Math.round(3+n+(n-1)*0.4))+"km run — "+n+" × 1km at goal pace"; }
+    return wk(L*0.5)+"km easy + 4 strides";
+  }
   return qualityLabel(role,o,cfg,bd);
 }
 function qualityLabel(role,o,cfg,bd){
-  const L=o.long, cap=capFor(cfg), wk=n=>Math.min(Math.max(5,Math.round(n)),cap);
-  const hill=cfg.terrain==='trail'||cfg.hills==='big', odd=o.wk%2===1;
+  const L=o.long, cap=capFor(cfg);
+  const odd=o.wk%2===1, hill=cfg.terrain==='trail'||cfg.hills==='big';
+  const wk=n=>Math.min(cap,Math.max(5,Math.round(n)));
+  const C=(n,lo,hi)=>Math.min(hi,Math.max(lo,Math.round(n)));
+  // honest total = warm-up 2km + work + jog recoveries + cool-down 1km (never over the time cap)
+  const R=(n,unit,work,rec,tag)=>{ const tot=Math.min(cap,Math.max(6,Math.round(2+n*work+Math.max(0,n-1)*rec+1))); return tot+"km run — "+n+" × "+unit+(tag?" "+tag:""); };
+  const TEMPO=k=>{ k=C(k,3,10); return (k+3)+"km run — "+k+"km tempo"; };            // +2km w-up, +1km c-down
+  const PROG=()=>{ const run=wk(L*0.6); return run+"km run — last "+Math.max(2,Math.round(run*0.4))+"km at goal pace"; };
   if(bd==='speed'){
-    if(role==='q1') return odd ? wk(L*0.8)+"km run — 5 × 3min fast" : wk(L*0.8)+"km run — 5 × 1km at goal pace";
-    return odd ? wk(L*0.7)+"km tempo run" : wk(L*0.7)+"km run — 8 × 400m fast";
+    if(role==='q1') return odd ? R(C(L*0.5,4,8),"3min fast",0.7,0.45) : R(C(L*0.4,3,7),"1km",1,0.4,"at goal pace");
+    return odd ? TEMPO(L*0.4) : R(C(L*0.7,4,10),"400m fast",0.4,0.35);
   }
-  if(bd==='half')  return role==='q1' ? (hill?wk(L*0.6)+"km hills":(odd?wk(L*0.6)+"km tempo run":wk(L*0.6)+"km run — 4 × 1.5km at goal pace")) : wk(L*0.6)+"km run — 6 × 800m fast";
-  if(bd==='marathon') return role==='q1' ? wk(L*0.6)+"km tempo run" : wk(L*0.6)+"km run — last "+Math.round(L*0.3)+"km at goal pace";
-  return role==='q1' ? (hill?wk(L*0.55)+"km hills":wk(L*0.55)+"km tempo run") : wk(L*0.5)+"km easy + strides";
+  if(bd==='half'){
+    if(role==='q1') return hill ? wk(L*0.6)+"km hills" : (odd ? TEMPO(L*0.45) : R(C(L*0.3,3,6),"1.5km",1.5,0.5,"at goal pace"));
+    return R(C(L*0.55,5,10),"800m fast",0.8,0.4);
+  }
+  if(bd==='marathon') return role==='q1' ? TEMPO(L*0.45) : PROG();
+  // ultra: strength + steady, no track work
+  return role==='q1' ? (hill ? wk(L*0.55)+"km hills" : TEMPO(L*0.4)) : wk(L*0.5)+"km easy + strides";
 }
 function longLabel(o,cfg,bd){
   const L=o.long;
@@ -953,13 +967,15 @@ function fuelNote(text){
   const t=(text||'').toLowerCase();
   if(/rest/.test(t)) return '';
   const km=sessionKm(text)||0;
-  const long = km>=16 || /long|dress rehearsal|b2b|back-to-back|fuel|marathon pace|goal pace|relaxed/.test(t);
-  const speed = /fast|interval|tempo|800m|hills|strides|×/.test(t);
+  const reps=/\d+\s*[×x]\s*\d/.test(t);
+  const quality=reps||/tempo|hills|strides|fast|interval/.test(t);
   let fuel;
   if(/race day/.test(t)) fuel="Big breakfast you've tested (porridge/toast/banana) ~2–3h before. On the move take 60–90g carbs an hour — roughly a gel every 25–30 min plus anything that sits well — and sip electrolyte drink from the very start. Don't wait until you feel empty.";
-  else if(long) fuel="Carby breakfast ~1.5–2h before (porridge, toast + honey, banana). During, aim for 30–60g carbs an hour — about a gel or banana every 40 min — and sip water or electrolytes. Afterwards, some carbs + protein within the hour (e.g. yoghurt & fruit, or a proper meal).";
-  else if(speed) fuel="A small carby snack 1–2h before (banana, toast) helps you hit the efforts. No need to eat mid-run. Refuel with carbs + protein after.";
-  else fuel="Nothing needed during — just water. A normal meal a couple of hours beforehand is plenty.";
+  else if(quality) fuel="A small carby snack 1–2h before (banana, toast) so you can hit the efforts — no need to eat mid-run, just sip water. Carbs + protein afterwards to recover.";
+  else if(km>=30) fuel="Carby breakfast ~2h before. It's long enough that fuelling on the move matters — 30–60g carbs an hour, roughly a gel or banana every 40 min, and sip water/electrolytes throughout. Carbs + protein within the hour after.";
+  else if(km>=18) fuel="Carby breakfast ~1.5–2h before. Good chance to rehearse race fuelling: take a gel or some chews every ~45 min and sip water/electrolytes. Carbs + protein after.";
+  else if(km>=12) fuel="Eat normally beforehand — a carby meal a couple of hours before is plenty. No need to fuel mid-run; carry water if it's warm. Refuel after.";
+  else fuel="Nothing needed during a run this short — just water if it's warm. A normal meal a couple of hours before is plenty.";
   return '<br><br><span style="color:var(--gold)">🍌 Fuel — '+fuel+'</span>';
 }
 function sessionGuide(text,cfg){
@@ -969,7 +985,7 @@ function sessionGuide(text,cfg){
   if(/shakeout/.test(t)) return {pill:"Short & gentle",body:"Just a short, very easy jog to keep your legs awake before race day. Stop while you still feel fresh — this one is meant to feel almost too easy."};
   if(/dress rehearsal/.test(t)) return {pill:"Practice run",body:"Your dress rehearsal for race day. Wear exactly what you'll wear on the day, carry your kit, and eat and drink exactly how you plan to in the race. It comes the day after another run on purpose, so your legs start a little tired — just like the back end of the race. Finish knowing you're ready."};
   const rb=repBreakdown(text,p);
-  if(/interval|×\s*\d+\s*min|800m|min fast/.test(t)) return {pill:"Speed session · run hard "+(p.interval||''),body: rb || ("A speed session. Warm up easy for 10 min, run the hard efforts shown at about "+(p.interval||'your fast pace')+"/km with easy jogs in between, then cool down. Tough but not an all-out sprint.")};
+  if(rb){ const atGoal=/goal pace/.test(t); return {pill: atGoal ? ("Goal-pace reps · "+(p.goal||'')) : ("Speed session · "+(p.interval||'')), body: rb}; }
   if(/marathon pace/.test(t)) return {pill:"Easy, then goal pace · "+(p.marathon||''),body:"Run most of it nice and easy. Then, for the last part shown, pick it up to your goal race pace ("+(p.marathon||'')+"/km) — the speed you want to hold on the day. Practising this when your legs are already tired is the whole point."};
   if(/goal pace/.test(t)) return {pill:"Easy, then goal pace",body:"Run the first part easy and chatty. Then lift the last stretch to your goal pace ("+(p.goal||'')+"/km). This teaches your legs to push a bit when they're already tired."};
   if(/tempo/.test(t)) return {pill:"Comfortably hard · "+(p.tempo||''),body:"Warm up easy for about 10 minutes. Then settle into a 'comfortably hard' pace ("+(p.tempo||'')+"/km) — quick, but not gasping; you could say a few words but not chat. Hold that for the time shown, then jog easy to finish."};
