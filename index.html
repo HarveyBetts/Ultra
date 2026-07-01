@@ -1159,13 +1159,33 @@ function stravaState(){return JSON.parse(localStorage.getItem(LS.strava)||'null'
 function isRun(a){ const s=(a&&(a.sport_type||a.type)||'').toLowerCase(); return s.includes('run'); }
 function stravaMsg(t){ const d=document.getElementById('stravaDesc'); if(d) d.textContent=t; }
 const BUILD='build 2026-07 · v5';
-(function(){ const b=document.getElementById('buildTag'); if(b)b.textContent=BUILD; const rb=document.getElementById('reloadRuns'); if(rb)rb.addEventListener('click',()=>{ if(!stravaState()){ toast('Connect Strava first'); return; } stravaMsg('Reloading from Strava…'); fetchActivities(); }); })();
+(function(){ const b=document.getElementById('buildTag'); if(b)b.textContent=BUILD; const rb=document.getElementById('reloadRuns'); if(rb)rb.addEventListener('click',async()=>{ if(!stravaState()){ toast('Connect Strava first'); return; } stravaMsg('Reloading from Strava…'); await fetchActivities(); alert('Strava debug (screenshot this):\n\n'+(STRAVA_DEBUG||'no response captured')); }); })();
 function initStrava(){const params=new URLSearchParams(location.search);if(params.get('code')&&params.get('scope')){exchangeCode(params.get('code'));history.replaceState({},'',location.pathname);return;}const st=stravaState();if(st&&st.athlete){showConnected(st);fetchActivities();}else showDisconnected();}
 function showDisconnected(){document.getElementById('stravaTitle').textContent='Connect Strava';document.getElementById('stravaDesc').textContent='Auto-pull your runs and tick off the week as you go.';stravaBtn.textContent='Connect';stravaBtn.onclick=connectStrava;document.getElementById('acts').innerHTML='';}
 function showConnected(st){document.getElementById('stravaTitle').textContent='Strava connected';document.getElementById('stravaDesc').textContent=`Synced as ${st.athlete.firstname||''} ${st.athlete.lastname||''}. Recent runs auto-tick your plan.`;stravaBtn.textContent='Disconnect';stravaBtn.onclick=()=>{localStorage.removeItem(LS.strava);showDisconnected();};}
 function connectStrava(){if(CONFIG.STRAVA_CLIENT_ID.startsWith('REPLACE')){alert('Strava isn\'t configured yet.');return;}const redirect=location.origin+location.pathname;location.href=`https://www.strava.com/oauth/authorize?client_id=${CONFIG.STRAVA_CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(redirect)}&approval_prompt=auto&scope=activity:read_all`;}
 async function exchangeCode(code){try{const r=await fetch(CONFIG.EDGE_FN_URL,{method:'POST',headers:hdr(),body:JSON.stringify({action:'exchange',code})});const data=await r.json();if(data.error)throw new Error(data.error);localStorage.setItem(LS.strava,JSON.stringify(data));const onbState=JSON.parse(localStorage.getItem(LS.onb)||'null');if(onbState&&onbState.active){applyStravaPrefill(data.activities||[]);seedSeen(data.activities||[]);resumeOnboardingAfterStrava();return;}if(CFG){showConnected(data);seedSeen(data.activities||[]);renderActivities(data.activities||[]);updatePBsFromStrava(data.activities||[]);autoTick(data.activities||[]);fetchActivities();}}catch(e){if(CFG){showConnected(stravaState()||{athlete:{}});stravaMsg('Connected, but sign-in didn\'t complete — tap Disconnect then Connect again.');}}}
-async function fetchActivities(){const st=stravaState();if(!st){return;}try{const r=await fetch(CONFIG.EDGE_FN_URL,{method:'POST',headers:hdr(),body:JSON.stringify({action:'activities',refresh_token:st.refresh_token})});const data=await r.json();if(data.error){stravaMsg('Couldn\'t load runs from Strava ('+data.error+'). Tap Disconnect then Connect again.');return;}if(data.refresh_token){st.refresh_token=data.refresh_token;localStorage.setItem(LS.strava,JSON.stringify(st));}const runs=(data.activities||[]).filter(isRun);renderActivities(data.activities||[]);updatePBsFromStrava(data.activities||[]);autoTick(data.activities||[]);maybePromptNewRun(data.activities||[]);if(!runs.length){stravaMsg('Connected — no recent runs found yet. Once you log a run on Strava it\'ll appear here.');}else{stravaMsg(runs.length+' recent runs synced. They auto-tick your plan.');}}catch(e){stravaMsg('Couldn\'t reach Strava right now — check your connection and reopen.');}}
+let STRAVA_DEBUG='';
+async function fetchActivities(){
+  const st=stravaState(); if(!st){return;}
+  try{
+    const r=await fetch(CONFIG.EDGE_FN_URL,{method:'POST',headers:hdr(),body:JSON.stringify({action:'activities',refresh_token:st.refresh_token})});
+    const raw=await r.text(); let data={}; try{data=JSON.parse(raw);}catch(_){}
+    STRAVA_DEBUG='HTTP '+r.status+' · '+raw.slice(0,240);
+    if(!r.ok||data.error){ stravaMsg('Strava error (HTTP '+r.status+'): '+(data.error||raw.slice(0,90))); return; }
+    if(data.refresh_token){st.refresh_token=data.refresh_token;localStorage.setItem(LS.strava,JSON.stringify(st));}
+    const acts=Array.isArray(data.activities)?data.activities:[];
+    const runs=acts.filter(isRun);
+    STRAVA_DEBUG+=' · '+acts.length+' activities, '+runs.length+' runs';
+    renderActivities(acts); updatePBsFromStrava(acts); autoTick(acts); maybePromptNewRun(acts);
+    if(!acts.length){ stravaMsg('Connected, but Strava returned 0 activities — on the Strava permission screen make sure "View data about your activities" is ticked (Disconnect, then Connect again).'); }
+    else if(!runs.length){ stravaMsg('Got '+acts.length+' activities but none are runs yet.'); }
+    else { stravaMsg(runs.length+' recent runs synced — auto-updating your plan & PBs.'); }
+  }catch(e){ STRAVA_DEBUG='fetch threw: '+e; stravaMsg("Couldn't reach Strava ("+e+")."); }
+}
+// keep runs & PBs fresh: refresh when the app regains focus and every ~2.5 min while open
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden&&CFG&&stravaState()) fetchActivities(); });
+setInterval(()=>{ if(!document.hidden&&CFG&&stravaState()) fetchActivities(); }, 150000);
 let RUNS=[];
 function renderActivities(list){
   const el=document.getElementById('acts'),head=document.getElementById('actsHead');
