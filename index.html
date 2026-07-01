@@ -201,8 +201,8 @@
   .session-head .strava-tick{font-size:9px;color:var(--strava);font-family:'Spline Sans Mono',monospace;letter-spacing:.05em}
   .session-head .caret{color:var(--mist);font-size:11px;transition:transform .2s}
   .session.open .caret{transform:rotate(90deg)}
-  .session-detail{max-height:0;overflow:hidden;transition:max-height .28s ease}
-  .session.open .session-detail{max-height:260px}
+  .session-detail{max-height:0;overflow:hidden;transition:max-height .3s ease}
+  .session.open .session-detail{max-height:1200px}
   .session-detail .inner{padding:2px 9px 12px 46px;font-size:12.5px;color:var(--mist);line-height:1.55}
   .session-detail .inner .pill{display:inline-block;font-family:'Spline Sans Mono',monospace;font-size:10px;color:var(--mo);border:1px solid var(--line);border-radius:6px;padding:2px 7px;margin:0 4px 6px 0}
   .week-ai{margin:2px 7px 6px;padding:9px;width:calc(100% - 14px);background:transparent;border:1px dashed var(--line);border-radius:9px;color:var(--mist);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px}
@@ -228,7 +228,8 @@
   .bubble.coach{align-self:flex-start;background:var(--paper-2);border:1px solid var(--line);color:var(--chalk);border-bottom-left-radius:5px}
   .bubble.coach.upd{border-color:var(--green)}
   .coach-input-row{display:flex;gap:10px;align-items:flex-end}
-  .coach-input-row textarea{flex:1;background:var(--paper-2);border:1px solid var(--line);border-radius:12px;color:var(--chalk);padding:12px 14px;font-family:'Sora';resize:none;min-height:46px;max-height:140px;line-height:1.45}
+  .coach-input-row textarea{flex:1;min-width:0;background:var(--paper-2);border:1px solid var(--line);border-radius:12px;color:var(--chalk);padding:13px 14px;font-family:'Sora';font-size:14px;resize:none;min-height:48px;max-height:140px;line-height:1.4}
+  .coach-input-row textarea::placeholder{color:var(--mist);opacity:.75}
   .coach-input-row textarea:focus{outline:none;border-color:var(--mo)}
   .coach-input-row .btn{padding:13px 18px}
   .coach-out.show{display:block;animation:fadeUp .4s ease}
@@ -266,6 +267,13 @@
   .brief-today{font-family:'Anton',sans-serif;font-size:clamp(20px,4.5vw,26px);text-transform:uppercase;margin-top:8px;line-height:1.05}
   .brief-today .rng{color:var(--mo)}
   .brief-coach{font-size:14px;color:var(--mist);margin-top:8px;line-height:1.55;min-height:1px}
+  .checkin-btn{margin-top:12px;width:100%;background:rgba(59,176,255,.1);border:1px solid var(--mo);color:var(--mo);font-weight:700;font-size:13.5px;padding:11px;border-radius:10px;cursor:pointer;transition:all .15s}
+  .checkin-btn:hover{background:rgba(59,176,255,.18)}
+  .checkin-btn.done{background:rgba(70,201,139,.08);border-color:var(--green);color:var(--green);cursor:default}
+  .checkin-q{margin-bottom:12px}
+  .checkin-q label{display:block;font-size:13px;color:var(--chalk);font-weight:600;margin-bottom:7px}
+  .ci-opts{flex-wrap:wrap;gap:7px}
+  .ci-opts .opt{flex:0 1 auto;padding:8px 13px;font-size:13px}
 
   /* recent runs header + per-run pace */
   .acts-head{font-family:'Spline Sans Mono',monospace;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--chalk);margin:18px 0 0;display:flex;align-items:baseline;gap:10px}
@@ -512,6 +520,7 @@
       <div class="brief-top"><span class="brief-eyebrow">Today's briefing</span><span class="brief-date" id="briefDate"></span></div>
       <div class="brief-today" id="briefToday">…</div>
       <div class="brief-coach" id="briefCoach"></div>
+      <button class="checkin-btn" id="checkinBtn">＋ Daily check-in</button>
     </div>
   </section>
 
@@ -557,7 +566,7 @@
       <div class="coach-thread" id="coachThread"></div>
       <div class="coach-row" id="coachChips"></div>
       <div class="coach-input-row">
-        <textarea id="coachInput" rows="1" placeholder="Ask anything, or tell me a change…"></textarea>
+        <textarea id="coachInput" rows="1" placeholder="Message your coach…"></textarea>
         <button class="btn btn-primary" id="coachAsk">Send</button>
       </div>
     </div>
@@ -605,6 +614,19 @@
 
 <!-- celebration -->
 <div class="celebrate" id="celebrate"><div class="celebrate-particles" id="celebrateParticles"></div><div class="celebrate-msg" id="celebrateMsg">Nice work!</div></div>
+
+<!-- daily check-in -->
+<div class="modal" id="checkinModal"><div class="modal-card">
+  <h3>Daily check-in</h3>
+  <div class="msub">A few quick taps and your coach will tailor today — and tweak the plan if you need it.</div>
+  <div class="checkin-q"><label>How do your legs feel?</label><div class="opts ci-opts" data-ci="legs"><div class="opt sel" data-val="fresh">Fresh</div><div class="opt" data-val="ok">A bit tired</div><div class="opt" data-val="sore">Sore / achy</div></div></div>
+  <div class="checkin-q"><label>Energy &amp; mood today?</label><div class="opts ci-opts" data-ci="energy"><div class="opt sel" data-val="good">Good</div><div class="opt" data-val="ok">OK</div><div class="opt" data-val="low">Low / flat</div></div></div>
+  <div class="checkin-q"><label>Sleep last night?</label><div class="opts ci-opts" data-ci="sleep"><div class="opt sel" data-val="good">Slept well</div><div class="opt" data-val="ok">So-so</div><div class="opt" data-val="poor">Poor</div></div></div>
+  <div class="checkin-q"><label>Yesterday's run?</label><div class="opts ci-opts" data-ci="yday"><div class="opt sel" data-val="done">Nailed it</div><div class="opt" data-val="partial">Cut it short</div><div class="opt" data-val="missed">Missed it</div><div class="opt" data-val="rest">Rest day</div></div></div>
+  <div class="field" style="margin-top:4px"><label>Anything else? (optional)</label><textarea id="ci_note" placeholder="Tight calf, busy day, feeling great…"></textarea></div>
+  <div class="modal-actions"><button id="checkinCancel">Cancel</button><button class="go" id="checkinGo">Get today's plan ›</button></div>
+  <div class="modal-status" id="checkinStatus"></div>
+</div></div>
 
 <!-- toast -->
 <div class="toast" id="toast"></div>
@@ -894,6 +916,19 @@ function repBreakdown(text,p){
   }
   return null;
 }
+function fuelNote(text){
+  const t=(text||'').toLowerCase();
+  if(/rest/.test(t)) return '';
+  const km=sessionKm(text)||0;
+  const long = km>=16 || /long|dress rehearsal|b2b|back-to-back|fuel|marathon pace|goal pace|relaxed/.test(t);
+  const speed = /fast|interval|tempo|800m|hills|strides|×/.test(t);
+  let fuel;
+  if(/race day/.test(t)) fuel="Big breakfast you've tested (porridge/toast/banana) ~2–3h before. On the move take 60–90g carbs an hour — roughly a gel every 25–30 min plus anything that sits well — and sip electrolyte drink from the very start. Don't wait until you feel empty.";
+  else if(long) fuel="Carby breakfast ~1.5–2h before (porridge, toast + honey, banana). During, aim for 30–60g carbs an hour — about a gel or banana every 40 min — and sip water or electrolytes. Afterwards, some carbs + protein within the hour (e.g. yoghurt & fruit, or a proper meal).";
+  else if(speed) fuel="A small carby snack 1–2h before (banana, toast) helps you hit the efforts. No need to eat mid-run. Refuel with carbs + protein after.";
+  else fuel="Nothing needed during — just water. A normal meal a couple of hours beforehand is plenty.";
+  return '<br><br><span style="color:var(--gold)">🍌 Fuel — '+fuel+'</span>';
+}
 function sessionGuide(text,cfg){
   const t=text.toLowerCase(), p=PACES_CACHE||{};
   if(/race day/.test(t)) return {pill:"The big day 🏁",body:"This is it! Start slower than you want to — it's a long day and going out too fast is the classic mistake. Walk through every aid station, and eat and drink a little from the very start (don't wait until you're hungry or thirsty). Break it into small chunks in your head. You've done the work — enjoy it."};
@@ -1007,7 +1042,7 @@ function renderWeeks(){
         <div class="chk ${done[key]?'done':''}" data-chk><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2l2.2 2.2 4.8-4.8" stroke="#04140C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
         <span class="d">${s[0]}</span><span class="t ${rest?'rest':''}">${escapeHtml(s[1])}</span>
         ${done[key+'_auto']?'<span class="strava-tick">▲ strava</span>':''}${rest?'':`<span class="s-pace">${sessionPace(s[1])}</span>`}${rest?'':'<span class="caret">▶</span>'}
-        </div>${rest?'':`<div class="session-detail"><div class="inner">${g.pill?`<span class="pill">${g.pill}</span><br>`:''}${g.body}</div></div>`}</div>`;
+        </div>${rest?'':`<div class="session-detail"><div class="inner">${g.pill?`<span class="pill">${g.pill}</span><br>`:''}${g.body}${fuelNote(s[1])}</div></div>`}</div>`;
     });
     card.innerHTML=`<div class="week-top"><span class="phase-flag" style="background:${PHASE_COLOR[w.phase]}"></span>${isCurrent?'<span class="now-badge">● now</span>':''}
       <div class="week-no">Week ${String(w.wk).padStart(2,'0')} · ${w.phase}</div>
@@ -1019,7 +1054,7 @@ function renderWeeks(){
   });
   weeksEl.querySelectorAll('.session').forEach(sess=>{
     sess.querySelector('[data-chk]').addEventListener('click',e=>{e.stopPropagation();toggleDone(sess.dataset.key);});
-    sess.querySelector('.session-head').addEventListener('click',()=>{if(sess.querySelector('.session-detail'))sess.classList.toggle('open');});
+    sess.querySelector('.session-head').addEventListener('click',()=>{const d=sess.querySelector('.session-detail');if(!d)return;const open=sess.classList.toggle('open');d.style.maxHeight=open?(d.scrollHeight+16)+'px':'0px';});
   });
   weeksEl.querySelectorAll('[data-ai]').forEach(b=>b.addEventListener('click',()=>openAiModal(+b.dataset.ai)));
   updateProgress();
@@ -1194,6 +1229,7 @@ function todaysSession(){
   for(let i=0;i<PLAN.length;i++){const r=WEEK_RANGES[i];if(now>=r.s&&now<r.e){const dow=DOW[now.getDay()];const hit=PLAN[i].s.find(s=>s[0]===dow);return {wk:PLAN[i].wk,phase:PLAN[i].phase,text:hit?hit[1]:null};}}
   return null;
 }
+function checkinKey(){ return 'ultra_checkin_'+new Date().toISOString().slice(0,10); }
 function renderBriefing(){
   const t=todaysSession();
   document.getElementById('briefDate').textContent=new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short'});
@@ -1201,23 +1237,46 @@ function renderBriefing(){
   if(!t){ today.textContent="You're all set — enjoy the day."; }
   else if(!t.text||/rest/i.test(t.text)){ today.innerHTML="Rest day. <span class='rng'>Recover well.</span>"; }
   else { today.innerHTML=escapeHtml(t.text)+(sessionPace(t.text)?` <span class="rng">@ ${sessionPace(t.text)}</span>`:''); }
-  // AI line, cached once per day
+  const cc=document.getElementById('briefCoach'), btn=document.getElementById('checkinBtn');
+  const ci=localStorage.getItem(checkinKey());
+  if(ci){ cc.textContent=ci; if(btn){ btn.textContent='✓ Checked in today'; btn.classList.add('done'); } return; }
+  if(btn){ btn.textContent='＋ Daily check-in'; btn.classList.remove('done'); }
   const key='ultra_brief_'+new Date().toISOString().slice(0,10);
   const cached=localStorage.getItem(key);
-  const cc=document.getElementById('briefCoach');
   if(cached){ cc.textContent=cached; return; }
   cc.textContent='';
   (async()=>{
     try{
       const done=JSON.parse(localStorage.getItem(LS.done)||'{}');let total=0,c=0;PLAN.forEach(w=>w.s.forEach((s,si)=>{if(/rest/i.test(s[1]))return;total++;if(done['w'+w.wk+'_s'+si])c++;}));
       const race=new Date(CFG.raceDate+'T08:00:00');const days=Math.max(0,Math.ceil((race-new Date())/864e5));
-      const sys=`You are ${CFG.name}'s warm ultra coach. Write ONE short, upbeat sentence (max 25 words, plain text, no markdown) briefing her on today. Today: ${t&&t.text?t.text:'rest'}. Progress: ${c}/${total} runs done, ${days} days to her ${CFG.raceDist}km. ${CFG.why?'Her why: '+CFG.why:''}`;
-      const line=await callAI(sys,'Give today\'s one-sentence briefing.',120);
+      const sys=`You are ${CFG.name}'s warm running coach. Write ONE short, upbeat sentence (max 25 words, plain text, no markdown) briefing them on today. Today: ${t&&t.text?t.text:'rest'}. Progress: ${c}/${total} runs done, ${days} days to their ${CFG.raceDist}km goal. ${CFG.why?'Their why: '+CFG.why:''}`;
+      const line=await callAI(sys,"Give today's one-sentence briefing.",120);
       const clean=(line||'').replace(/\*\*/g,'').replace(/^#+\s/gm,'').trim();
       if(clean){ localStorage.setItem(key,clean); cc.textContent=clean; }
     }catch(e){}
   })();
 }
+const checkinPicks={legs:'fresh',energy:'good',sleep:'good',yday:'done'};
+document.querySelectorAll('.ci-opts').forEach(g=>g.addEventListener('click',e=>{const o=e.target.closest('.opt');if(!o)return;g.querySelectorAll('.opt').forEach(x=>x.classList.remove('sel'));o.classList.add('sel');checkinPicks[g.dataset.ci]=o.dataset.val;}));
+document.getElementById('checkinBtn').addEventListener('click',()=>{ document.getElementById('checkinStatus').textContent=''; document.getElementById('checkinModal').classList.add('show'); });
+document.getElementById('checkinCancel').addEventListener('click',()=>document.getElementById('checkinModal').classList.remove('show'));
+document.getElementById('checkinGo').addEventListener('click',async()=>{
+  const st=document.getElementById('checkinStatus'); st.innerHTML='<span class="spin"></span>Your coach is looking at today…';
+  const note=(document.getElementById('ci_note').value||'').trim(); const t=todaysSession();
+  try{
+    const sys=`You are ${CFG.name}'s warm, expert running and sports-nutrition coach, and you can edit the plan. ${profileText(CFG)}${planContextForCoach()}
+The runner just did a morning check-in. Give a short (max 90 words, plain text, no markdown, no bullet symbols) recommendation for TODAY that reacts to how they feel — reassure them, adjust the effort if needed, and mention fuelling or recovery where relevant. Change the plan ONLY if clearly warranted (very sore or exhausted → make today or tomorrow easier; feeling great on an easy day is fine to leave). Keep any food advice positive, never restrictive. Return ONLY JSON {"reply":"...","ops":[]} using the normal op types.`;
+    const user=`Today's planned session: ${t&&t.text?t.text:'rest day'}. Check-in — legs: ${checkinPicks.legs}, energy/mood: ${checkinPicks.energy}, sleep: ${checkinPicks.sleep}, yesterday's run: ${checkinPicks.yday}.${note?' Note: "'+note+'".':''}`;
+    let txt=await callAI(sys,user,700); txt=txt.replace(/```json|```/g,'').trim();
+    let data; try{ data=JSON.parse(txt); }catch(_){ data={reply:txt.replace(/\*\*/g,'').replace(/^#+\s/gm,''),ops:[]}; }
+    let reply=(data.reply||'Have a good one today!').replace(/\*\*/g,'').replace(/^#+\s/gm,'');
+    let updated=false; if(Array.isArray(data.ops)&&data.ops.length) updated=applyOps(data.ops);
+    localStorage.setItem(checkinKey(), reply);
+    document.getElementById('checkinModal').classList.remove('show');
+    renderBriefing();
+    toast(updated?'Today updated ✓':'Check-in saved ✓');
+  }catch(e){ st.textContent='Coach unavailable right now — try again in a moment.'; }
+});
 function autoTick(list){if(!WEEK_RANGES.length)return;window.__lastActs=list;const done=JSON.parse(localStorage.getItem(LS.done)||'{}');const runs=(list||[]).filter(a=>a.type==='Run').map(a=>({d:new Date(a.start_date_local),km:a.distance/1000}));PLAN.forEach((w,i)=>{const r=WEEK_RANGES[i];const weekRuns=runs.filter(x=>x.d>=r.s&&x.d<r.e).sort((a,b)=>b.km-a.km);if(!weekRuns.length)return;const sess=w.s.map((s,si)=>({si,km:sessionKm(s[1])||0,rest:/rest/i.test(s[1])})).filter(s=>!s.rest).sort((a,b)=>b.km-a.km);weekRuns.forEach((run,ri)=>{const target=sess[ri];if(!target)return;const key='w'+w.wk+'_s'+target.si;if(!done[key]){done[key]=true;done[key+'_auto']=true;}});});localStorage.setItem(LS.done,JSON.stringify(done));renderWeeks();}
 const PB_BUCKETS=[['5000',4700,5400,'5k'],['10000',9400,10600,'10k'],['15000',14200,15800,'15k'],['21097',20500,21800,'half'],['30000',29000,31000,'30k'],['42195',41000,43500,'marathon']];
 function pbsFromRuns(runs){
@@ -1247,7 +1306,7 @@ function profileText(cfg){
 let COACH_HISTORY=[];
 function addBubble(role,text,upd){const th=document.getElementById('coachThread');const b=document.createElement('div');b.className='bubble '+(role==='me'?'me':'coach')+(upd?' upd':'');b.textContent=text;th.appendChild(b);th.scrollTop=th.scrollHeight;return b;}
 function renderCoach(cfg){
-  const chips=cfg.raceDist<=12?["What pace for my intervals?","I do parkrun every Saturday","I can't run Thursdays","How do I hit my goal time?"]:["Add my Saturday parkrun","How should I pace my long run?","I can't run Thursdays — move things","I missed two runs — what now?"];
+  const chips=cfg.raceDist<=12?["What should I eat before a race?","How do I fuel my long runs?","I do parkrun every Saturday","How do I hit my goal time?"]:["What should I eat before my long run?","How many gels on race day?","Add my Saturday parkrun","I missed two runs — what now?"];
   document.getElementById('coachChips').innerHTML=chips.map(c=>`<span class="coach-chip">${escapeHtml(c)}</span>`).join('');
   document.querySelectorAll('.coach-chip').forEach(c=>c.addEventListener('click',()=>{const i=document.getElementById('coachInput');i.value=c.textContent;i.focus();}));
   const th=document.getElementById('coachThread');
@@ -1291,6 +1350,7 @@ async function sendCoach(){
   const loading=addBubble('coach',''); loading.innerHTML='<span class="spin"></span>thinking…';
   try{
     const sys=`You are an experienced, warm running coach embedded in ${CFG.name}'s training app, and you can EDIT the plan directly. ${profileText(CFG)}${planContextForCoach()}
+You are ALSO a practical sports-nutrition expert. Give real fuelling and hydration advice when asked or relevant: pre-run meals and timing, carbs-per-hour on long runs (30–60g/h training, up to ~90g/h racing), gels vs real food, race-day fuelling and carb-loading, hydration and electrolytes, and recovery meals (carbs + protein). Tailor to their fuelling experience (${CFG.fuel}). Keep food advice positive and practical — never calorie-restrictive or weight-focused; if they raise disordered-eating themes, gently suggest a professional.
 Reply in PLAIN conversational text — no markdown, no #, no **, no bullet symbols. Under 150 words, encouraging and specific to their data and goal.
 Return ONLY valid JSON (no code fences): {"reply":"...","ops":[]}.
 Use "ops" ONLY when they ask to change their routine/schedule; otherwise ops is [].
@@ -1384,7 +1444,11 @@ document.getElementById('resetBtn').addEventListener('click',()=>{if(confirm('St
   // every normal open: play the full intro (photo → donation → letter), then route on the button
   runIntro();
 })();
-if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').then(reg=>{ reg.update(); setInterval(()=>reg.update(),60*60*1000); }).catch(()=>{});
+  let reloaded=false;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{ if(reloaded)return; reloaded=true; location.reload(); });
+}
 </script>
 </body>
 </html>
