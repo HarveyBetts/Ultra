@@ -1473,6 +1473,16 @@ function planContextForCoach(){
   if(!lines.length)return '';
   return `\nThe runner's actual sessions for the next few weeks, with exact dates and the correct target pace for each:\n${lines.join('\n')}\nWhen they ask about a run on a date, use THIS list and the pace shown — never guess. A run written like "5 × 3min fast", "6 × 800m fast", "×Nmin" or "×800m" means HARD fast efforts at interval pace with easy jogs between — NOT an easy run. "tempo run" is comfortably-hard. "easy"/"long"/"recovery"/"B2B"/"strides" are easy and conversational. Explain whatever is actually scheduled, accurately.`;
 }
+function salvageOps(str){ const ops=[]; let depth=0,start=-1; for(let i=0;i<str.length;i++){ const c=str[i]; if(c==='{'){ if(depth===0)start=i; depth++; } else if(c==='}'){ if(depth>0){ depth--; if(depth===0&&start>=0){ try{ const o=JSON.parse(str.slice(start,i+1)); if(o&&o.op) ops.push(o); }catch(_){} start=-1; } } } } return ops; }
+function safeParseCoach(txt){
+  try{ const o=JSON.parse(txt); if(o&&typeof o==='object'&&!Array.isArray(o)) return {reply:o.reply||'',ops:Array.isArray(o.ops)?o.ops:[]}; }catch(_){}
+  const whole=txt.match(/\{[\s\S]*\}/); if(whole){ try{ const o=JSON.parse(whole[0]); if(o&&typeof o==='object'&&!Array.isArray(o)) return {reply:o.reply||'',ops:Array.isArray(o.ops)?o.ops:[]}; }catch(_){} }
+  let reply=''; const rm=txt.match(/"reply"\s*:\s*"((?:[^"\\]|\\.)*)"/); if(rm){ try{ reply=JSON.parse('"'+rm[1]+'"'); }catch(_){ reply=rm[1].replace(/\\"/g,'"'); } }
+  let ops=[]; const om=txt.match(/"ops"\s*:\s*\[/); if(om) ops=salvageOps(txt.slice(om.index));
+  if(reply) return {reply,ops};
+  if(/^\s*[\[{]/.test(txt)) return {reply:"I drafted an updated plan but my reply got cut off before it finished. Ask me to update a few weeks at a time and I'll lock each one in cleanly.",ops:ops};
+  return {reply:txt,ops:[]};
+}
 async function sendCoach(){
   const inp=document.getElementById('coachInput'); const q=inp.value.trim(); if(!q)return;
   inp.value=''; inp.style.height='auto';
@@ -1490,9 +1500,9 @@ Op types:
 - {"op":"weekEdit","wk":7,"sessions":[["Sat","12km easy"],["Sun","32km long easy"]]} — rewrites ONE week.
 Day = Mon..Sun. Session text starts with a distance like "5km easy" or "8km run — 6 × 800m fast". Keep their goal and progression sensible.`;
     const convo=COACH_HISTORY.slice(-8).map(m=>(m.role==='user'?'Runner: ':'Coach: ')+m.content).join('\n');
-    let txt=await callAI(sys,convo+'\nCoach, reply now as JSON.',1100); txt=txt.replace(/```json|```/g,'').trim();
-    let data; try{ data=JSON.parse(txt); }catch(_){ data={reply:txt.replace(/\*\*/g,'').replace(/^#+\s/gm,''),ops:[]}; }
-    let reply=(data.reply||'Done.').replace(/\*\*/g,'').replace(/^#+\s/gm,'');
+    let txt=await callAI(sys,convo+'\nCoach, reply now as JSON.',3000); txt=txt.replace(/```json|```/g,'').trim();
+    const data=safeParseCoach(txt);
+    let reply=(data.reply||'Done.').replace(/\*\*/g,'').replace(/^#+\s/gm,'').trim();
     let updated=false; if(Array.isArray(data.ops)&&data.ops.length) updated=applyOps(data.ops);
     loading.className='bubble coach'+(updated?' upd':''); loading.textContent=reply+(updated?'\n\n✓ Plan updated — scroll up to see your weeks.':'');
     COACH_HISTORY.push({role:'assistant',content:reply});
