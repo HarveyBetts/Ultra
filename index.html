@@ -992,7 +992,7 @@ function sessionGuide(text,cfg){
   if(/recovery/.test(t)) return {pill:"Very easy",body:"Short and deliberately slow — this run is only there to loosen your legs the day after a hard one. If in doubt, go slower. It should feel almost lazy."};
   if(/b2b|back-to-back/.test(t)) return {pill:"Easy (on tired legs)",body:"An easy run the day before your long run, so tomorrow you start on slightly tired legs. Keep it genuinely easy and chatty — feeling a bit tired is the point, not the speed."};
   if(/fuel/.test(t)) return {pill:"Easy + practise eating",body:"Easy effort the whole way, but practise eating and drinking like it's race day: a little something (a gel, chews, or real food) every 30–40 minutes, even if you don't feel you need it yet. Your stomach gets better at it with practice."};
-  if(/strides/.test(t)) return {pill:"Easy + a few pickups",body:"Mostly easy, relaxed running. Near the end, add 4–6 'strides': run about 20 seconds gradually building up to fast-but-smooth, then walk back to recover before the next. They keep your legs sharp without tiring you out."};
+  if(/strides/.test(t)){ const sm=t.match(/(\d+)\s*strides/); const n=sm?sm[1]:"4–6"; const km=sessionKm(text); return {pill:"Easy run + short pickups",body:`First run <b>${km?km+" km ":""}easy</b> — relaxed and chatty the whole way (${p.easy||"easy"}/km).<br><br>Then finish with <b>${n} strides</b>. A stride is a short, smooth pick-up — do each one like this:<br>• On flat, safe ground, gradually speed up over about <b>20 seconds</b> (roughly 100 m)<br>• Build to <b>fast but relaxed</b> — about 90%, never an all-out sprint, shoulders loose<br>• Ease off, then <b>walk or jog for ~60 seconds</b> until your breath is fully back<br>• That’s one stride — <b>repeat until you’ve done ${n}</b><br><br>They wake your legs up and tidy your running form, but they’re so short they add no real tiredness. Leave them out if anything feels sore.`}; }
   if(/relaxed/.test(t)) return {pill:"Easy (lighter week)",body:"A shorter version of your long run on an easier week. Same relaxed, chatty effort — just less distance, so your body can soak up the training. Don't be tempted to push, even if you feel great."};
   if(/long/.test(t)) return {pill:"Big easy run · "+(p.easy||''),body:"The most important run of your week. Go slow and steady — easy enough to chat the whole way ("+(p.easy||'')+"/km). Walk the hills if you like, drink when you're thirsty, and don't worry about pace at all. Time on your feet is the goal."};
   if(/easy/.test(t)) return {pill:"Easy & gentle · "+(p.easy||''),body:"Nice and relaxed from the very first step — you should be able to talk in full sentences the whole way ("+(p.easy||'')+"/km). If you're puffing, slow down. Easy days being truly easy is what makes your hard days count."};
@@ -1445,19 +1445,36 @@ function renderCoach(cfg){
   if(inp&&!inp.__wired){ inp.__wired=true; inp.addEventListener('input',()=>{inp.style.height='auto';inp.style.height=Math.min(inp.scrollHeight,140)+'px';}); inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendCoach();}}); }
 }
 
+function applyConfigChanges(c){
+  if(!c||typeof c!=='object') return false;
+  const num=['raceDist','days','currentLong','weekly'];
+  const allow=['raceDate','raceDist','goalType','goalTime','days','longday','currentLong','weekly','terrain','hills','name','race'];
+  let did=false;
+  allow.forEach(k=>{ let v=c[k]; if(v===undefined||v===null||v==='') return;
+    if(num.includes(k)){ v=parseInt(v,10); if(!v) return; }
+    if(k==='raceDist') v=Math.min(200,Math.max(1,v));
+    if(k==='days') v=Math.min(6,Math.max(3,v));
+    if(k==='longday') v=cap3(v);
+    if(k==='raceDate'&&!/^\d{4}-\d{2}-\d{2}$/.test(String(v))) return;
+    CFG[k]=v; did=true;
+  });
+  return did;
+}
 function applyOps(ops){
   const rules=JSON.parse(localStorage.getItem(LS.rules)||'[]');
   const overrides=JSON.parse(localStorage.getItem(LS.overrides)||'{}');
-  let changed=false;
+  let changed=false, cfgChanged=false;
   ops.forEach(op=>{
     if(op.op==='weekEdit'&&op.wk&&Array.isArray(op.sessions)){ overrides['w'+op.wk]=op.sessions; changed=true; }
     else if(op.op==='recurring'&&op.day&&op.text){ rules.push({op:'recurring',day:cap3(op.day),text:op.text,merge:op.merge!==false}); changed=true; }
     else if(op.op==='removeDay'&&op.day){ rules.push({op:'removeDay',day:cap3(op.day)}); changed=true; }
+    else if(op.op==='config'){ if(applyConfigChanges(op.changes||op)) cfgChanged=true; }
   });
-  if(!changed) return false;
-  localStorage.setItem(LS.rules,JSON.stringify(rules));
-  localStorage.setItem(LS.overrides,JSON.stringify(overrides));
-  PLAN=buildPlan(CFG); renderWeeks();
+  if(!changed&&!cfgChanged) return false;
+  if(changed){ localStorage.setItem(LS.rules,JSON.stringify(rules)); localStorage.setItem(LS.overrides,JSON.stringify(overrides)); }
+  if(cfgChanged){ localStorage.setItem(LS.cfg,JSON.stringify(CFG)); derivePaces(CFG); }
+  PLAN=buildPlan(CFG); computeWeekRanges(CFG);
+  renderHero(CFG); renderWeeks(); renderPaces(CFG); renderBriefing();
   if(window.__lastActs) autoTick(window.__lastActs);
   return true;
 }
@@ -1471,7 +1488,7 @@ function planContextForCoach(){
       lines.push(d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})+' — '+s[1]+(pace?' (target '+pace+'/km)':'')); });
   });
   if(!lines.length)return '';
-  return `\nThe runner's actual sessions for the next few weeks, with exact dates and the correct target pace for each:\n${lines.join('\n')}\nWhen they ask about a run on a date, use THIS list and the pace shown — never guess. A run written like "5 × 3min fast", "6 × 800m fast", "×Nmin" or "×800m" means HARD fast efforts at interval pace with easy jogs between — NOT an easy run. "tempo run" is comfortably-hard. "easy"/"long"/"recovery"/"B2B"/"strides" are easy and conversational. Explain whatever is actually scheduled, accurately.`;
+  return `\nThe runner's actual sessions for the next few weeks, with exact dates and the correct target pace for each:\n${lines.join('\n')}\nWhen they ask about a run on a date, use THIS list and the pace shown — never guess. A run written like "5 × 3min fast", "6 × 800m fast", "×Nmin" or "×800m" means HARD fast efforts at interval pace with easy jogs between — NOT an easy run. "tempo run" is comfortably-hard. "easy"/"long"/"recovery"/"B2B" are easy and conversational. "strides" means: run easy, then finish with a handful of ~20-second controlled pick-ups (gradually build to fast-but-smooth, about 90%, NOT a sprint, with a full walk/jog recovery between each) to sharpen the legs — the easy run itself stays relaxed. Explain whatever is actually scheduled, accurately.`;
 }
 function salvageOps(str){ const ops=[]; let depth=0,start=-1; for(let i=0;i<str.length;i++){ const c=str[i]; if(c==='{'){ if(depth===0)start=i; depth++; } else if(c==='}'){ if(depth>0){ depth--; if(depth===0&&start>=0){ try{ const o=JSON.parse(str.slice(start,i+1)); if(o&&o.op) ops.push(o); }catch(_){} start=-1; } } } } return ops; }
 function safeParseCoach(txt){
@@ -1493,11 +1510,12 @@ async function sendCoach(){
 You are ALSO a practical sports-nutrition expert. Give real fuelling and hydration advice when asked or relevant: pre-run meals and timing, carbs-per-hour on long runs (30–60g/h training, up to ~90g/h racing), gels vs real food, race-day fuelling and carb-loading, hydration and electrolytes, and recovery meals (carbs + protein). Tailor to their fuelling experience (${CFG.fuel}). Keep food advice positive and practical — never calorie-restrictive or weight-focused; if they raise disordered-eating themes, gently suggest a professional.
 Reply in PLAIN conversational text — no markdown, no #, no **, no bullet symbols. Under 150 words, encouraging and specific to their data and goal.
 Return ONLY valid JSON (no code fences): {"reply":"...","ops":[]}.
-Use "ops" ONLY when they ask to change their routine/schedule; otherwise ops is [].
+Use "ops" whenever they ask to change ANYTHING about the plan — a weekday, a whole week, their race date, race distance, goal time, or how many days a week they run. Otherwise ops is []. If they ask to move the race or change a setting, you MUST include the matching op — never just say you have done it without the op.
 Op types:
 - {"op":"recurring","day":"Sat","text":"5km parkrun","merge":true} — applies that weekday every week; merge:true fits it alongside existing training (keeps volume), merge:false fully replaces the day.
 - {"op":"removeDay","day":"Wed"} — clears that weekday across all weeks.
 - {"op":"weekEdit","wk":7,"sessions":[["Sat","12km easy"],["Sun","32km long easy"]]} — rewrites ONE week.
+- {"op":"config","changes":{"raceDate":"2026-10-03"}} — changes core settings and rebuilds the WHOLE plan. Editable fields: raceDate (YYYY-MM-DD), raceDist (km number), goalType ("finish"|"strong"|"time"), goalTime ("mm:ss" or "h:mm:ss"), days (3-6), longday (Mon..Sun), currentLong (km), weekly (km), terrain, hills. Use this to move the race, change distance or goal, or change training days.
 Day = Mon..Sun. Session text starts with a distance like "5km easy" or "8km run — 6 × 800m fast". Keep their goal and progression sensible.`;
     const convo=COACH_HISTORY.slice(-8).map(m=>(m.role==='user'?'Runner: ':'Coach: ')+m.content).join('\n');
     let txt=await callAI(sys,convo+'\nCoach, reply now as JSON.',3000); txt=txt.replace(/```json|```/g,'').trim();
