@@ -980,7 +980,13 @@ function fuelNote(text){
 function sessionGuide(text,cfg){
   const t=text.toLowerCase(), p=PACES_CACHE||{};
   if(/race day/.test(t)) return {pill:"The big day 🏁",body:"This is it! Start slower than you want to — it's a long day and going out too fast is the classic mistake. Walk through every aid station, and eat and drink a little from the very start (don't wait until you're hungry or thirsty). Break it into small chunks in your head. You've done the work — enjoy it."};
-  if(/parkrun/.test(t)) return {pill:"Easy 5k (plus extra)",body:"Run your local Saturday parkrun, but keep it relaxed — not a race (unless we've planned one). If there's more distance to do after, just carry straight on from the finish to make it your long run. A nice social way to start a big weekend."};
+  if(/parkrun/.test(t)){
+    if(/tune.?up/.test(t)) return {pill:"Tune-up race 🏁",body:"This one you actually race. Warm up with 10–15 min easy jogging plus a few strides, then give the parkrun a proper go — even pace, strong finish. It's your dress rehearsal: it tells us exactly where your fitness is and gets your body used to race effort. One of these, 2–3 weeks out, is worth more than any training session."};
+    if(/goal pace|controlled effort/.test(t)){ let band=""; try{ const g=parseTime(p.goal||""); if(g){ band=" — about "+fmtPace(g+10)+"–"+fmtPace(g+15)+"/km for you"; } }catch(_){}
+      return {pill:"Strong parkrun — not a race",body:"Warm up 10 min easy first. Then run the parkrun strong but held back: roughly <b>10–15 seconds per km slower than goal pace</b>"+band+". You should finish feeling like you had one more gear. Don't run the full 5k at goal pace in training — that's race effort, and spending it now just costs you on the day. Save the real thing for race day."};
+    }
+    return {pill:"Easy 5k (plus extra)",body:"Run your local Saturday parkrun, but keep it relaxed — not a race (unless it's labelled a tune-up). If there's more distance to do after, just carry straight on from the finish to make it your long run. A nice social way to start a big weekend."};
+  }
   if(/shakeout/.test(t)) return {pill:"Short & gentle",body:"Just a short, very easy jog to keep your legs awake before race day. Stop while you still feel fresh — this one is meant to feel almost too easy."};
   if(/dress rehearsal/.test(t)) return {pill:"Practice run",body:"Your dress rehearsal for race day. Wear exactly what you'll wear on the day, carry your kit, and eat and drink exactly how you plan to in the race. It comes the day after another run on purpose, so your legs start a little tired — just like the back end of the race. Finish knowing you're ready."};
   const rb=repBreakdown(text,p);
@@ -1488,7 +1494,7 @@ function planContextForCoach(){
       lines.push(d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})+' — '+s[1]+(pace?' (target '+pace+'/km)':'')); });
   });
   if(!lines.length)return '';
-  return `\nThe runner's actual sessions for the next few weeks, with exact dates and the correct target pace for each:\n${lines.join('\n')}\nWhen they ask about a run on a date, use THIS list and the pace shown — never guess. A run written like "5 × 3min fast", "6 × 800m fast", "×Nmin" or "×800m" means HARD fast efforts at interval pace with easy jogs between — NOT an easy run. "tempo run" is comfortably-hard. "easy"/"long"/"recovery"/"B2B" are easy and conversational. "strides" means: run easy, then finish with a handful of ~20-second controlled pick-ups (gradually build to fast-but-smooth, about 90%, NOT a sprint, with a full walk/jog recovery between each) to sharpen the legs — the easy run itself stays relaxed. Explain whatever is actually scheduled, accurately.`;
+  return `\nThe runner's actual sessions for the next few weeks, with exact dates and the correct target pace for each:\n${lines.join('\n')}\nWhen they ask about a run on a date, use THIS list and the pace shown — never guess. A run written like "5 × 3min fast", "6 × 800m fast", "×Nmin" or "×800m" means HARD fast efforts at interval pace with easy jogs between — NOT an easy run. "tempo run" is comfortably-hard. "easy"/"long"/"recovery"/"B2B" are easy and conversational. "parkrun" is an easy social 5k unless explicitly labelled a tune-up race. "strides" means: run easy, then finish with a handful of ~20-second controlled pick-ups (gradually build to fast-but-smooth, about 90%, NOT a sprint, with a full walk/jog recovery between each) to sharpen the legs — the easy run itself stays relaxed. Explain whatever is actually scheduled, accurately.`;
 }
 function salvageOps(str){ const ops=[]; let depth=0,start=-1; for(let i=0;i<str.length;i++){ const c=str[i]; if(c==='{'){ if(depth===0)start=i; depth++; } else if(c==='}'){ if(depth>0){ depth--; if(depth===0&&start>=0){ try{ const o=JSON.parse(str.slice(start,i+1)); if(o&&o.op) ops.push(o); }catch(_){} start=-1; } } } } return ops; }
 function safeParseCoach(txt){
@@ -1516,6 +1522,11 @@ Op types:
 - {"op":"removeDay","day":"Wed"} — clears that weekday across all weeks.
 - {"op":"weekEdit","wk":7,"sessions":[["Sat","12km easy"],["Sun","32km long easy"]]} — rewrites ONE week.
 - {"op":"config","changes":{"raceDate":"2026-10-03"}} — changes core settings and rebuilds the WHOLE plan. Editable fields: raceDate (YYYY-MM-DD), raceDist (km number), goalType ("finish"|"strong"|"time"), goalTime ("mm:ss" or "h:mm:ss"), days (3-6), longday (Mon..Sun), currentLong (km), weekly (km), terrain, hills. Use this to move the race, change distance or goal, or change training days.
+HARD coaching rules for any session you write — never break these:
+1) NEVER schedule the runner's full race distance as one continuous run at goal pace. For a 5k runner, 5km at goal pace IS the race — it belongs on race day only. Goal-pace work is always reps with recoveries (e.g. "5 × 1km at goal pace") or a short finishing segment inside a longer run ("last 2km at goal pace").
+2) Parkruns are easy and social by default. If they want quality in a parkrun, cap it 10–15 sec/km SLOWER than goal pace and write "strong, not a race".
+3) At most ONE all-out parkrun may be scheduled as a benchmark, 2–3 weeks before race day, and it must be labelled "tune-up race".
+4) Nothing all-out in the final 10 days before the race — taper means lower volume, short touches of race pace only.
 Day = Mon..Sun. Session text starts with a distance like "5km easy" or "8km run — 6 × 800m fast". Keep their goal and progression sensible.`;
     const convo=COACH_HISTORY.slice(-8).map(m=>(m.role==='user'?'Runner: ':'Coach: ')+m.content).join('\n');
     let txt=await callAI(sys,convo+'\nCoach, reply now as JSON.',3000); txt=txt.replace(/```json|```/g,'').trim();
